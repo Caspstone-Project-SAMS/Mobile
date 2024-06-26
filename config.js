@@ -1,23 +1,85 @@
 import * as React from 'react';
-import { Platform } from 'react-native';
-import { configureFonts, MD3LightTheme } from 'react-native-paper';
+import {
+  configureFonts,
+  DefaultTheme,
+  MD2LightTheme,
+} from 'react-native-paper';
 
 const fontConfig = {
-  customVariant: {
-    fontFamily: Platform.select({
-      web: 'Lexend-Light, sans-serif',
-      ios: 'Lexend-Light, System',
-      android: 'Lexend-Light, sans-serif',
-      default: 'Lexend-Light, sans-serif',
-    }),
-    fontWeight: '400',
-    letterSpacing: 0.5,
-    lineHeight: 22,
-    fontSize: 20,
+  web: {
+    regular: {
+      fontFamily: 'Lexend-Light',
+      fontWeight: 'normal',
+      color: '#1A1F36', //grey color
+    },
+    medium: {
+      fontFamily: 'Lexend-Medium',
+      fontWeight: 'normal',
+      color: '#1A1F36',
+    },
+    light: {
+      fontFamily: 'Lexend-Light',
+      fontWeight: 'normal',
+      color: '#1A1F36',
+    },
+    thin: {
+      fontFamily: 'Lexend-Thin',
+      fontWeight: 'normal',
+      color: '#1A1F36',
+    },
+  },
+  ios: {
+    regular: {
+      fontFamily: 'Lexend-Light',
+      fontWeight: 'normal',
+      color: '#1A1F36',
+    },
+    medium: {
+      fontFamily: 'Lexend-Medium',
+      fontWeight: 'normal',
+      color: '#1A1F36',
+    },
+    light: {
+      fontFamily: 'Lexend-Light',
+      fontWeight: 'normal',
+      color: '#1A1F36',
+    },
+    thin: {
+      fontFamily: 'Lexend-Thin',
+      fontWeight: 'normal',
+      color: '#1A1F36',
+    },
+  },
+  android: {
+    regular: {
+      fontFamily: 'Lexend-Light',
+      fontWeight: 'normal',
+      color: '#1A1F36',
+    },
+    medium: {
+      fontFamily: 'Lexend-Medium',
+      fontWeight: 'normal',
+      color: '#1A1F36',
+    },
+    light: {
+      fontFamily: 'Lexend-Light',
+      fontWeight: 'normal',
+      color: '#1A1F36',
+    },
+    thin: {
+      fontFamily: 'Lexend-Thin',
+      fontWeight: 'normal',
+      color: '#1A1F36',
+    },
   },
 };
 
 export const appTheme = {
-  ...MD3LightTheme,
-  fonts: configureFonts({ config: fontConfig }),
+  ...MD2LightTheme,
+  myOwnProperty: true,
+  fonts: configureFonts({ config: fontConfig, isV3: false }),
+  colors: {
+    ...DefaultTheme.colors,
+    primary: '#2563EB',
+  },
 };

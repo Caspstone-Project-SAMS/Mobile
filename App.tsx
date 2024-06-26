@@ -1,13 +1,18 @@
+import 'react-native-gesture-handler';
 import React, { useCallback } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { DefaultTheme, Text as PaperTxt } from 'react-native-paper';
-import Login from './src/screens/auth/Login';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFonts } from "expo-font";
-import * as SplashScreen from 'expo-splash-screen';
+import { StyleSheet } from 'react-native';
+
 import { appTheme } from './config';
-import { configureFonts, MD2LightTheme, PaperProvider } from 'react-native-paper';
-import CustomText from './src/components/global/CustomTxt';
+import { useFonts } from "expo-font";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
+import { PaperProvider } from 'react-native-paper';
+import { ToastProvider } from 'react-native-toast-notifications';
+
+import Login from './src/screens/auth/Login';
+import Navigator from './src/components/navigator/Navigator';
+import { Provider } from 'react-redux';
+import Store from './src/redux/Store';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,91 +34,18 @@ const App: React.FC = () => {
   if (!fontsLoaded && !fontError) {
     return null;
   }
-  const fontConfig = {
-    web: {
-      regular: {
-        fontFamily: 'Lexend-Light',
-        fontWeight: 'normal',
-        color: '#1A1F36' //grey color
-      },
-      medium: {
-        fontFamily: 'Lexend-Medium',
-        fontWeight: 'normal',
-        color: '#1A1F36'
-      },
-      light: {
-        fontFamily: 'Lexend-Light',
-        fontWeight: 'normal',
-        color: '#1A1F36'
-      },
-      thin: {
-        fontFamily: 'Lexend-Thin',
-        fontWeight: 'normal',
-        color: '#1A1F36'
-      },
-    },
-    ios: {
-      regular: {
-        fontFamily: 'Lexend-Light',
-        fontWeight: 'normal',
-        color: '#1A1F36'
-      },
-      medium: {
-        fontFamily: 'Lexend-Medium',
-        fontWeight: 'normal',
-        color: '#1A1F36'
-      },
-      light: {
-        fontFamily: 'Lexend-Light',
-        fontWeight: 'normal',
-        color: '#1A1F36'
-      },
-      thin: {
-        fontFamily: 'Lexend-Thin',
-        fontWeight: 'normal',
-        color: '#1A1F36'
-      },
-    },
-    android: {
-      regular: {
-        fontFamily: 'Lexend-Light',
-        fontWeight: 'normal',
-        color: '#1A1F36'
-      },
-      medium: {
-        fontFamily: 'Lexend-Medium',
-        fontWeight: 'normal',
-        color: '#1A1F36'
-      },
-      light: {
-        fontFamily: 'Lexend-Light',
-        fontWeight: 'normal',
-        color: '#1A1F36'
-      },
-      thin: {
-        fontFamily: 'Lexend-Thin',
-        fontWeight: 'normal',
-        color: '#1A1F36'
-      },
-    }
-  };
-
-  const theme = {
-    ...MD2LightTheme,
-    myOwnProperty: true,
-    fonts: configureFonts({ config: fontConfig, isV3: false }),
-    colors: {
-      ...DefaultTheme.colors,
-      primary: '#2563EB',
-    },
-  };
 
   return (
-    <PaperProvider theme={theme}>
-      <SafeAreaView style={styles.container} onLayout={onLayoutRootView}>
-        <Login />
-      </SafeAreaView>
-    </PaperProvider>
+    <Provider store={Store}>
+      <PaperProvider theme={appTheme}>
+        <SafeAreaView style={styles.container} onLayout={onLayoutRootView}>
+          <ToastProvider>
+            {/* <Login /> */}
+            <Navigator />
+          </ToastProvider>
+        </SafeAreaView>
+      </PaperProvider>
+    </Provider>
   );
 };
 export default App;

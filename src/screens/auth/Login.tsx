@@ -5,23 +5,28 @@ import { COLORS, FONT_COLORS } from "../../assets/styles/variables";
 import { DividerWithTxt } from "../../components/global/DividerWithTxt";
 import { GLOBAL_STYLES } from "../../assets/styles/styles";
 import CustomBtn from "../../components/global/CustomBtn";
+import useDispatch from "../../redux/UseDispatch";
+import { login } from "../../redux/slice/Auth";
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [secureTextEntry, setSecureTextEntry] = useState(true);
+    const dispatch = useDispatch()
 
     const [focusInput, setFocusInput] = useState<string | undefined>();
+    const handleLogin = async () => {
+        await dispatch(login({ username: email, password }));
+    };
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <Image
-                    source={require('../../assets/imgs/logo_cut_close.png')}
+                    source={require('../../assets/imgs/logo_cut-removebg-preview.png')}
                     style={{
-                        // width: 150,
-                        // height: 150,
-                        // justifyContent: 'center'
+                        width: 150,
+                        height: 150,
                     }}
                 />
                 <Text style={styles.title}>
@@ -84,6 +89,7 @@ const Login: React.FC = () => {
                 </TouchableOpacity>
                 <TouchableOpacity
                     activeOpacity={0.6}
+                    onPress={() => handleLogin()}
                 >
                     <CustomBtn text="Login" />
                 </TouchableOpacity>
