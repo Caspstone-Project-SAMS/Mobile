@@ -1,11 +1,12 @@
-import { View, StyleSheet, Image, TouchableOpacity, Dimensions, TouchableWithoutFeedback, TouchableWithoutFeedbackComponent, TouchableWithoutFeedbackBase, Pressable, ScrollView } from 'react-native'
-import { Text } from 'react-native-paper'
 import React, { useRef, useState } from 'react'
-import { COLORS } from '../../assets/styles/variables'
-import Swiper from 'react-native-swiper'
+import { View, StyleSheet, Image, TouchableOpacity, Dimensions, Pressable, ScrollView } from 'react-native'
 import moment from 'moment'
+import { Text } from 'react-native-paper'
+import Swiper from 'react-native-swiper'
 import { ParamListBase, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
+
+import { COLORS } from '../../assets/styles/variables'
 import SmallCard from './cards/SmallCard'
 
 type DayProps = {
@@ -14,7 +15,7 @@ type DayProps = {
   selected: boolean
 }
 const { width } = Dimensions.get('window');
-moment.locale('ko', {
+moment.updateLocale('ko', {
   week: {
     dow: 1,
     doy: 1,
@@ -23,7 +24,7 @@ moment.locale('ko', {
 const Home = () => {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const swiper = useRef();
-  const sampleData = ['MLN1', 'MLN2', 'MLN3', 'MLN4'];
+  const sampleData = ['MLN1', 'MLN2', 'MLN3'];
 
   const [currentDay, setCurrentDay] = useState(new Date());
   const [week, setWeek] = useState(0);
@@ -93,11 +94,9 @@ const Home = () => {
             }}
           >
             {weeks.map((dates, index) => {
-              console.log("console the dates - index: ", index);
               return (<View key={index} style={[styles.scheduleRow, { flex: 1 }]}>
                 {
                   dates.map((item, i) => {
-                    console.log('-------Console item - i:  ', i)
                     const isActive =
                       currentDay.toDateString() === item.date.toDateString();
                     return (
@@ -105,9 +104,6 @@ const Home = () => {
                         key={`dayCard_${i}`}
                         onPress={() => {
                           setCurrentDay(item.date)
-                          console.log(
-                            "On select day", item.date.getDate()
-                          );
                         }}
                         style={{ height: 54 }}
                       >
