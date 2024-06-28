@@ -40,7 +40,6 @@ const login = createAsyncThunk(
     // console.log('Imhereeeeeeee ');
     const { username, password } = arg;
     try {
-      //Toast chỉ nhận promise, nhưng redux async thunk cần trả về promise đã hoàn thành để thực hiện pending, fulfilled,...
       const loginPromise = AuthService.login(username, password);
       const result = await loginPromise;
       // console.log('User result here ', result);

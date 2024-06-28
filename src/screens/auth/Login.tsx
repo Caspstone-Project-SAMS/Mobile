@@ -25,8 +25,8 @@ const Login: React.FC = () => {
                 <Image
                     source={require('../../assets/imgs/logo_cut-removebg-preview.png')}
                     style={{
-                        width: 150,
-                        height: 150,
+                        width: 100,
+                        height: 100,
                     }}
                 />
                 <Text style={styles.title}>

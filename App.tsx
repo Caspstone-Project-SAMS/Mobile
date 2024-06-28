@@ -9,7 +9,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { PaperProvider } from 'react-native-paper';
 import { ToastProvider } from 'react-native-toast-notifications';
 
-import Login from './src/screens/auth/Login';
 import Navigator from './src/components/navigator/Navigator';
 import { Provider } from 'react-redux';
 import Store from './src/redux/Store';
@@ -40,7 +39,6 @@ const App: React.FC = () => {
       <PaperProvider theme={appTheme}>
         <SafeAreaView style={styles.container} onLayout={onLayoutRootView}>
           <ToastProvider>
-            {/* <Login /> */}
             <Navigator />
           </ToastProvider>
         </SafeAreaView>
