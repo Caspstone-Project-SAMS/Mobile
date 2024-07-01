@@ -8,4 +8,8 @@ export const GLOBAL_STYLES = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 5,
   },
+  horizontalCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
 });

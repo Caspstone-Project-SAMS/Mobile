@@ -43,4 +43,5 @@ export const FONT_COLORS = {
   blackFontColor: '#000',
   greyFontColor: '#1A1F36', //Main font color
   blurFontColor: '#6B6B6B',
+  blueFontColor: '#0093FE', //Link
 };

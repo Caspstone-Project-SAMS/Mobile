@@ -10,8 +10,8 @@ const Navigator = () => {
   const logined = true
   return (
     <NavigationContainer independent={true}>
-      {/* {userInfo?.token ? <AuthStack /> : <UnAuthStack />} */}
-      {logined ? <AuthStack /> : <UnAuthStack />}
+      {userInfo?.token ? <AuthStack /> : <UnAuthStack />}
+      {/* {logined ? <AuthStack /> : <UnAuthStack />} */}
     </NavigationContainer>
   )
 }

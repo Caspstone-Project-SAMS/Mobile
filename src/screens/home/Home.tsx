@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { View, StyleSheet, Image, TouchableOpacity, Dimensions, Pressable, ScrollView } from 'react-native'
 import moment from 'moment'
 import { Text } from 'react-native-paper'
@@ -6,13 +6,25 @@ import Swiper from 'react-native-swiper'
 import { ParamListBase, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 
-import { COLORS } from '../../assets/styles/variables'
+import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import SmallCard from './cards/SmallCard'
+import ActivityCard from './cards/ActivityCard'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../redux/Store'
+import { getTodaySchedule } from '../../redux/slice/Schedule'
+import useDispatch from '../../redux/UseDispatch'
+import { useToast } from 'react-native-toast-notifications'
+import { Slots } from '../../models/schedule/Slot'
 
 type DayProps = {
   day: number,
   weekday: string,
   selected: boolean
+}
+
+interface WeekDay {
+  weekday: string;
+  date: Date;
 }
 const { width } = Dimensions.get('window');
 moment.updateLocale('ko', {
@@ -28,6 +40,10 @@ const Home = () => {
 
   const [currentDay, setCurrentDay] = useState(new Date());
   const [week, setWeek] = useState(0);
+  const userInfo = useSelector((state: RootState) => state.auth.userDetail)
+  const { data, error } = useSelector((state: RootState) => state.schedule)
+  const dispatch = useDispatch();
+  const toast = useToast();
 
   const weeks = React.useMemo(() => {
     const start = moment().add(week, 'weeks').startOf('week');
@@ -43,6 +59,48 @@ const Home = () => {
       });
     });
   }, [week]);
+
+
+  const getWeekFromDate = (inputDate: Date): WeekDay[] => {
+    const startOfWeek = moment(inputDate).startOf('week');
+    const week: WeekDay[] = [];
+
+    for (let i = 0; i < 7; i++) {
+      const date = moment(startOfWeek).add(i, 'days').toDate();
+      week.push({
+        weekday: moment(date).format('ddd'),
+        date: date,
+      });
+    }
+
+    return week;
+  };
+
+  useEffect(() => {
+    const cur = moment().format('YYYY-MM-DD');
+    const lecturerId = userInfo?.result?.id
+    const semesterId = '2' //fix cung ky hoc
+    if (lecturerId && semesterId) {
+      dispatch(getTodaySchedule({ lecturerId, semesterId }))
+    }
+
+    // console.log("In here ",
+    //   getWeekFromDate(cur)
+    // );
+  }, [])
+
+  // useEffect(() => {
+  //   if (error) {
+  //     toast.show(`Error: ${error}`, { type: 'danger', duration: 1500 });
+  //   }
+  // }, [error]);
+
+  useEffect(() => {
+    if (data) {
+      // toast.show('Welcome!', { type: 'success' });
+      console.log("Data", data);
+    }
+  }, [data]);
 
   return (
     <ScrollView style={styles.container}>
@@ -120,7 +178,7 @@ const Home = () => {
 
       <View style={styles.body}>
         <View style={styles.dashBoardCtn}>
-          <Text style={styles.dashboardTitle}>Today Attendance</Text>
+          <Text style={styles.titleLabel}>Today Attendance</Text>
           <View style={{ flexDirection: "row", justifyContent: 'space-between', gap: 10 }}>
             <SmallCard
               titleIcon={require('../../assets/icons/upcoming_x3.png')}
@@ -164,6 +222,31 @@ const Home = () => {
                 }
               })}
             </View>
+          </View>
+        </View>
+
+        <View style={styles.classActivities}>
+          <View style={styles.activitiesHeader}>
+            <Text style={styles.titleLabel}>Today Activites | {data.length}</Text>
+            <TouchableOpacity>
+              <Text style={{ color: FONT_COLORS.blueFontColor }}>View All</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ gap: 10 }}>
+            {
+              data.map((item, i) => {
+                const timeSlot = Slots[item.slotNumber - 1].timeStart + ' - ' + Slots[item.slotNumber - 1].timeEnd
+                return (
+                  <ActivityCard
+                    room={item.roomName}
+                    status='Upcoming'
+                    subjectCode={item.subjectCode}
+                    time={timeSlot}
+                    key={`schedule_${i}`} />
+                )
+              })
+            }
           </View>
         </View>
       </View>
@@ -271,7 +354,7 @@ const styles = StyleSheet.create({
     // flexDirection: 'row',
     // justifyContent: 'space-between'
   },
-  dashboardTitle: {
+  titleLabel: {
     fontSize: 18,
     marginBottom: 10,
     fontFamily: 'Lexend-Regular'
@@ -322,6 +405,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     marginHorizontal: 10,
   },
+  classActivities: {
+    marginTop: 5,
+    marginBottom: 25
+  },
+  activitiesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  }
 })
 
 export default Home

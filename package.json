@@ -15,6 +15,7 @@
     "@react-navigation/native-stack": "^6.9.26",
     "@react-navigation/stack": "^6.3.29",
     "@reduxjs/toolkit": "^2.2.5",
+    "@types/react-native-vector-icons": "^6.4.18",
     "@typescript-eslint/eslint-plugin": "^7.13.0",
     "@typescript-eslint/parser": "^7.13.0",
     "axios": "^1.7.2",
@@ -42,6 +43,8 @@
     "react-native-screens": "3.31.1",
     "react-native-swiper": "^1.6.0",
     "react-native-toast-notifications": "^3.4.0",
+    "react-native-vector-icons": "^10.1.0",
+    "react-native-wifi-reborn": "^4.12.1",
     "react-redux": "^9.1.2"
   },
   "devDependencies": {
