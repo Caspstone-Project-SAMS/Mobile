@@ -4,6 +4,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { ScheduleResponse } from '../../models/schedule/ScheduleResponse';
 import { ScheduleService } from '../../hooks/Schedule';
+import { validateStatusSchedule } from '../../hooks/helpers/ScheduleHelper';
 
 type Schedule = {
   data: ScheduleResponse[];
@@ -72,10 +73,50 @@ const ScheduleSlice = createSlice({
       state.loading = true;
     });
     builder.addCase(getTodaySchedule.fulfilled, (state, action) => {
+      state.loading = false;
       const { payload } = action;
 
-      state.loading = false;
       payload.forEach((newItem: ScheduleResponse) => {
+        //Calculate schedule status
+        const dateArr = newItem.date.split('-');
+        const startArr = newItem.startTime.split(':');
+        const endArr = newItem.endTime.split(':');
+
+        const formatTime = {
+          year: Number(dateArr[0]),
+          month: Number(dateArr[1]),
+          day: Number(dateArr[2]),
+          startHour: Number(startArr[0]),
+          startMin: Number(startArr[1]),
+          endHour: Number(endArr[0]),
+          endMin: Number(endArr[1]),
+        };
+        const status = validateStatusSchedule(
+          new Date(
+            formatTime.year,
+            formatTime.month - 1,
+            formatTime.day,
+            formatTime.startHour,
+            formatTime.startMin,
+          ),
+          new Date(
+            formatTime.year,
+            formatTime.month - 1,
+            formatTime.day,
+            formatTime.endHour,
+            formatTime.endMin,
+          ),
+        );
+        console.log(
+          'Time start: ',
+          formatTime.year,
+          formatTime.month - 1,
+          formatTime.day,
+          formatTime.startHour,
+          formatTime.startMin,
+        );
+        newItem.status = status;
+        console.log('After changed', newItem);
         const existingItemIndex = state.data.findIndex(
           (item) =>
             item.date === newItem.date &&

@@ -8,4 +8,5 @@ export interface ScheduleResponse {
   roomName: string;
   slotNumber: number;
   subjectCode: string;
+  status?: 'Past' | 'Current' | 'Upcoming'; //extend
 }

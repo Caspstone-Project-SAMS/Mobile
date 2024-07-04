@@ -1,26 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { View, StyleSheet, Image, TouchableOpacity, Dimensions, Pressable, ScrollView } from 'react-native'
-import moment from 'moment'
 import { Text } from 'react-native-paper'
 import Swiper from 'react-native-swiper'
+import moment from 'moment'
 import { ParamListBase, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
-
-import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
-import SmallCard from './cards/SmallCard'
-import ActivityCard from './cards/ActivityCard'
-import { useSelector } from 'react-redux'
-import { RootState } from '../../redux/Store'
-import { getTodaySchedule } from '../../redux/slice/Schedule'
 import useDispatch from '../../redux/UseDispatch'
 import { useToast } from 'react-native-toast-notifications'
-import { Slots } from '../../models/schedule/Slot'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../redux/Store'
 
-type DayProps = {
-  day: number,
-  weekday: string,
-  selected: boolean
-}
+import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
+import { getTodaySchedule } from '../../redux/slice/Schedule'
+import { Slots } from '../../models/schedule/Slot'
+import { DayCard } from './cards/DayCard'
+import SmallCard from './cards/SmallCard'
+import ActivityCard from './cards/ActivityCard'
 
 interface WeekDay {
   weekday: string;
@@ -34,19 +29,19 @@ moment.updateLocale('ko', {
   }
 })
 const Home = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const swiper = useRef();
+  const toast = useToast();
+  const dispatch = useDispatch();
+  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const sampleData = ['MLN1', 'MLN2', 'MLN3'];
 
   const [currentDay, setCurrentDay] = useState(new Date());
-  const [week, setWeek] = useState(0);
-  const userInfo = useSelector((state: RootState) => state.auth.userDetail)
+
   const { data, error } = useSelector((state: RootState) => state.schedule)
-  const dispatch = useDispatch();
-  const toast = useToast();
+  const userInfo = useSelector((state: RootState) => state.auth.userDetail)
 
   const weeks = React.useMemo(() => {
-    const start = moment().add(week, 'weeks').startOf('week');
+    const start = moment().add(0, 'weeks').startOf('week');
 
     return [-1, 0, 1].map(adj => {
       return Array.from({ length: 7 }).map((_, index) => {
@@ -58,7 +53,7 @@ const Home = () => {
         };
       });
     });
-  }, [week]);
+  }, []);
 
 
   const getWeekFromDate = (inputDate: Date): WeekDay[] => {
@@ -100,11 +95,10 @@ const Home = () => {
       // toast.show('Welcome!', { type: 'success' });
       console.log("Data", data);
     }
-  }, [data]);
+  }, [data, toast]);
 
   return (
     <ScrollView style={styles.container}>
-
       <View style={styles.header}>
         <View style={styles.title}>
           <View style={styles.userInfoCtn}>
@@ -136,20 +130,8 @@ const Home = () => {
             style={{ marginTop: 20, maxHeight: 60 }}
             index={1}
             ref={swiper}
-            loop={true}
+            loop={false}
             showsPagination={false}
-            onIndexChanged={ind => {
-              if (ind === 1) {
-                return;
-              }
-              setTimeout(() => {
-                const newIndex = ind - 1;
-                const newWeek = week + newIndex;
-                setWeek(newWeek);
-                // setCurrentDay(moment(currentDay).add(newIndex, 'week').toDate());
-                swiper.current!.scrollTo(1, false);
-              }, 100);
-            }}
           >
             {weeks.map((dates, index) => {
               return (<View key={index} style={[styles.scheduleRow, { flex: 1 }]}>
@@ -200,7 +182,7 @@ const Home = () => {
               <View style={styles.titleIconCtn}>
                 <Image source={require('../../assets/icons/classIcon.png')} style={styles.cardIcon} />
               </View>
-              <Text style={styles.titleTxt}>Subject Prepare</Text>
+              <Text style={[styles.titleTxt, { paddingRight: 48 }]}>Subject Prepare</Text>
             </View>
             <View style={styles.subjectDetailCtn}>
               {sampleData.map((item, i) => {
@@ -240,7 +222,7 @@ const Home = () => {
                 return (
                   <ActivityCard
                     room={item.roomName}
-                    status='Upcoming'
+                    status={item.status ?? 'Past'}
                     subjectCode={item.subjectCode}
                     time={timeSlot}
                     key={`schedule_${i}`} />
@@ -254,33 +236,6 @@ const Home = () => {
     </ScrollView>
   )
 }
-
-const DayCard: React.FC<DayProps> = React.memo(({ day, weekday, selected }) => {
-  const theme = selected ?
-    {
-      txtColor: '#FFF',
-      subTxtColor: '#FFF',
-      bgColor: '#0087FD'
-    } : {
-      txtColor: '#000',
-      subTxtColor: '#000',
-      bgColor: '#FFF'
-    }
-
-  return (
-    <View style={[styles.dayCardCtn, { backgroundColor: theme.bgColor }]}>
-      <Text style={{
-        fontFamily: 'Lexend-Medium',
-        fontSize: 16,
-        color: theme.txtColor
-      }}>{day}</Text>
-      <Text style={{
-        fontSize: 14,
-        color: theme.subTxtColor
-      }}>{weekday}</Text>
-    </View>
-  )
-})
 
 const styles = StyleSheet.create({
   container: {
@@ -389,9 +344,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   subjectDetailCtn: {
-    // flexDirection: 'row',
-    // flexWrap: 'wrap'
-    // justifyContent: 'center'
+    gap: 6
   },
   detail: {
     width: '45%',

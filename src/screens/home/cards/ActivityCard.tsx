@@ -7,7 +7,7 @@ type props = {
     subjectCode: string,
     room: string,
     time: string,
-    status: 'Upcoming' | 'Current' | 'Past'
+    status: 'Past' | 'Current' | 'Upcoming'
 }
 
 const ActivityCard: React.FC<props> = ({ room, status, subjectCode, time }) => {

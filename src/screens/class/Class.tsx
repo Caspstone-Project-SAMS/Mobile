@@ -1,10 +1,11 @@
 import { View, StyleSheet, ScrollView, Image } from 'react-native'
 import React, { useState } from 'react'
 import { Text, TextInput } from 'react-native-paper'
+import { TouchableOpacity } from 'react-native-gesture-handler'
+
 import { COLORS } from '../../assets/styles/variables'
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
 import DashboardCard from './cards/DashboardCard'
-import { TouchableOpacity } from 'react-native-gesture-handler'
 import StudentActivityCard from './cards/StudentActivityCard'
 
 
