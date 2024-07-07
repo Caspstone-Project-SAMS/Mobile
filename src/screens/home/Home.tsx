@@ -17,6 +17,9 @@ import { DayCard } from './cards/DayCard'
 import SmallCard from './cards/SmallCard'
 import ActivityCard from './cards/ActivityCard'
 
+import { PermissionsAndroid } from 'react-native';
+import WifiManager from "react-native-wifi-reborn";
+
 interface WeekDay {
   weekday: string;
   date: Date;
@@ -28,7 +31,45 @@ moment.updateLocale('ko', {
     doy: 1,
   }
 })
-const Home = () => {
+const Home = async () => {
+
+  //Man hinh trang, infinity log => chinh sua lai
+  const granted = await PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    {
+      title: 'Location permission is required for WiFi connections',
+      message:
+        'SAMS application needs location permission as this is required  ' +
+        'to scan for wifi networks.',
+      buttonNegative: 'DENY',
+      buttonPositive: 'ALLOW',
+    },
+  );
+  // if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+  //   // You can now use react-native-wifi-reborn
+  //   let wifiList = await WifiManager.loadWifiList(); //wifiList will be Array<WifiEntry>
+  //   console.log('wifi list', wifiList);
+  // } else {
+  //   // Permission denied
+  //   console.log("Denied to use Wifi");
+  // }
+  const [onClick, setOnClick] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      // You can now use react-native-wifi-reborn
+      const getWifiOnPress = async () => {
+        let wifiList = await WifiManager.loadWifiList(); //wifiList will be Array<WifiEntry>
+        console.log('wifi list', wifiList);
+      }
+
+      getWifiOnPress();
+    } else {
+      // Permission denied
+      console.log("Denied to use Wifi");
+    }
+  }, [onclick])
+
   const swiper = useRef();
   const toast = useToast();
   const dispatch = useDispatch();
@@ -144,6 +185,7 @@ const Home = () => {
                         key={`dayCard_${i}`}
                         onPress={() => {
                           setCurrentDay(item.date)
+                          setOnClick(!onClick);
                         }}
                         style={{ height: 54 }}
                       >
