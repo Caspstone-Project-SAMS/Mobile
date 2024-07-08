@@ -31,44 +31,22 @@ moment.updateLocale('ko', {
     doy: 1,
   }
 })
-const Home = async () => {
+const Home = () => {
 
-  //Man hinh trang, infinity log => chinh sua lai
-  const granted = await PermissionsAndroid.request(
-    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-    {
-      title: 'Location permission is required for WiFi connections',
-      message:
-        'SAMS application needs location permission as this is required  ' +
-        'to scan for wifi networks.',
-      buttonNegative: 'DENY',
-      buttonPositive: 'ALLOW',
-    },
-  );
-  // if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-  //   // You can now use react-native-wifi-reborn
-  //   let wifiList = await WifiManager.loadWifiList(); //wifiList will be Array<WifiEntry>
-  //   console.log('wifi list', wifiList);
-  // } else {
-  //   // Permission denied
-  //   console.log("Denied to use Wifi");
-  // }
+  // const granted = PermissionsAndroid.request(
+  //   PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+  //   {
+  //     title: 'Location permission is required for WiFi connections',
+  //     message:
+  //       'SAMS application needs location permission as this is required  ' +
+  //       'to scan for wifi networks.',
+  //     buttonNegative: 'DENY',
+  //     buttonPositive: 'ALLOW',
+  //   },
+  // )
+
   const [onClick, setOnClick] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      // You can now use react-native-wifi-reborn
-      const getWifiOnPress = async () => {
-        let wifiList = await WifiManager.loadWifiList(); //wifiList will be Array<WifiEntry>
-        console.log('wifi list', wifiList);
-      }
-
-      getWifiOnPress();
-    } else {
-      // Permission denied
-      console.log("Denied to use Wifi");
-    }
-  }, [onclick])
+  const [wifiPermission, setWifiPermission] = useState();
 
   const swiper = useRef();
   const toast = useToast();
@@ -112,6 +90,22 @@ const Home = async () => {
     return week;
   };
 
+  //Man hinh trang, infinity log => chinh sua lai
+  const grantedPermission = async () => {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      {
+        title: 'Location permission is required for WiFi connections',
+        message:
+          'SAMS application needs location permission as this is required  ' +
+          'to scan for wifi networks.',
+        buttonNegative: 'DENY',
+        buttonPositive: 'ALLOW',
+      },
+    )
+    return granted;
+  }
+
   useEffect(() => {
     const cur = moment().format('YYYY-MM-DD');
     const lecturerId = userInfo?.result?.id
@@ -123,13 +117,24 @@ const Home = async () => {
     // console.log("In here ",
     //   getWeekFromDate(cur)
     // );
+    const permission = grantedPermission();
+    permission.then(info => setWifiPermission(info)).catch(err => "Got err here bro")
   }, [])
 
-  // useEffect(() => {
-  //   if (error) {
-  //     toast.show(`Error: ${error}`, { type: 'danger', duration: 1500 });
-  //   }
-  // }, [error]);
+  useEffect(() => {
+    if (wifiPermission === PermissionsAndroid.RESULTS.GRANTED) {
+      // You can now use react-native-wifi-reborn
+      const getWifiOnPress = async () => {
+        let wifiList = await WifiManager.loadWifiList(); //wifiList will be Array<WifiEntry>
+        console.log('wifi list', wifiList);
+      }
+
+      getWifiOnPress();
+    } else {
+      // Permission denied
+      console.log("Denied to use Wifi");
+    }
+  }, [onClick, wifiPermission])
 
   useEffect(() => {
     if (data) {
@@ -158,7 +163,10 @@ const Home = async () => {
           <TouchableOpacity
             activeOpacity={0.4}
             style={styles.bellNotification}
-            onPress={() => { navigation.navigate('ScheduleSwipe') }}
+            onPress={() => {
+              //  navigation.navigate('ScheduleSwipe') 
+              // setWifiPermission(grantedPermission())
+            }}
           >
             <Image source={require('../../assets/icons/bell.png')}
               style={styles.bellIcon}
