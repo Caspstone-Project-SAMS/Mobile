@@ -1,4 +1,4 @@
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
 import { Text } from 'react-native-paper'
 import React, { useEffect, useState } from 'react'
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
@@ -19,8 +19,8 @@ const Module = () => {
     }, [])
 
     return (
-        <View style={styles.container}>
-            <Text style={GLOBAL_STYLES.titleLabel}>Device Management</Text>
+        <ScrollView style={styles.container}>
+            <Text style={GLOBAL_STYLES.titleLabel}>Module Management</Text>
 
             <View style={styles.titleContainer}>
                 <Text>Wifi Connected: {currentWifi}</Text>
@@ -52,8 +52,10 @@ const Module = () => {
                 </View>
             </View>
 
-            <Wifi />
-        </View>
+            <View style={{ marginBottom: 40 }}>
+                <Wifi />
+            </View>
+        </ScrollView>
     )
 }
 
@@ -62,7 +64,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingVertical: 15,
         paddingHorizontal: 20,
-        backgroundColor: '#FFF'
+        backgroundColor: '#FFF',
     },
     titleContainer: {
         marginTop: 12,

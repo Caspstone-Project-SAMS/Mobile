@@ -1,11 +1,13 @@
 import { PermissionsAndroid, StyleSheet, TouchableOpacity, View } from 'react-native'
-import { ActivityIndicator, Text } from 'react-native-paper'
+import { ActivityIndicator, Button, Modal, Portal, Text, TextInput } from 'react-native-paper'
 import React, { useEffect, useState } from 'react'
 import MaterialComIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { COLORS, FONT_COLORS } from '../../assets/styles/variables';
 import { GLOBAL_STYLES } from '../../assets/styles/styles';
 import WifiManager, { WifiEntry } from "react-native-wifi-reborn";
 import { useToast } from 'react-native-toast-notifications'
+import InputSecureText from '../../components/input/InputSecureText';
+import CustomBtn from '../../components/global/CustomBtn';
 
 
 const getSignalStrength = (level: number) => {
@@ -55,14 +57,24 @@ const WifiItem: React.FC<WifiEntry> = ({ BSSID, SSID, frequency, level, capabili
     )
 }
 
+const ModalConnect = () => {
+
+}
+
 const Wifi = () => {
     const [onClick, setOnClick] = useState<boolean>(false);
     const [wifiPermission, setWifiPermission] = useState();
     const [wifiList, setWifiList] = useState<WifiEntry[]>([]);
     const [onLoading, setOnLoading] = useState<boolean>(false);
-
     const [currentWifi, setCurrentWifi] = useState<string>('')
     const [currentModule, setCurrentModule] = useState<string>('')
+    //Modal
+    const [visible, setVisible] = React.useState(false);
+    const [password, setPassword] = useState("");
+    const [settingInfo, setSettingInfo] = useState<WifiEntry>();
+
+    const showModal = () => setVisible(true);
+    const hideModal = () => setVisible(false);
 
     const toast = useToast()
 
@@ -79,6 +91,16 @@ const Wifi = () => {
             },
         )
         return granted;
+    }
+
+    const handleConnectPassword = (ssid: string) => {
+        if (password.length > 0) {
+            try {
+                WifiManager.connectToProtectedSSID(ssid, password, true, false)
+            } catch (error) {
+                console.log("error when connect password ", error);
+            }
+        }
     }
 
     useEffect(() => {
@@ -101,13 +123,14 @@ const Wifi = () => {
                     }, 1200)
                 }).catch(err => {
                     setOnLoading(false);
-                    toast.show('Wifi and location require on!', { type: 'danger', placement: 'top', duration: 1200 })
+                    toast.show('Wifi and location require on!', { type: 'warning', placement: 'top', duration: 1200 })
                 })
             }
 
             getWifiOnPress();
         } else {
-            console.log("Denied to use Wifi");
+            // toast.show('App require wifi and location access permission to use this function', { type: 'danger', placement: 'top', duration: 2000 })
+            console.log("Wifi denied");
         }
     }, [onClick, wifiPermission])
 
@@ -119,10 +142,8 @@ const Wifi = () => {
                     <ActivityIndicator animating={true} color={COLORS.greenSystem} />
                 ) : (
                     <TouchableOpacity
-                        onPress={async () => {
+                        onPress={() => {
                             setOnClick(!onClick)
-                            // const list = await WifiManager.reScanAndLoadWifiList()
-                            // setWifiList(list)
                         }}
                     >
                         <Text style={{ color: COLORS.greenSystem }}>Refresh</Text>
@@ -133,12 +154,37 @@ const Wifi = () => {
                 {
                     wifiList.map((wifi, i) => (
                         <TouchableOpacity
-                            key={`wifi_${i}`}>
+                            key={`wifi_${i}`}
+                            onPress={() => {
+                                setSettingInfo(wifi);
+                                setVisible(!visible)
+                            }}
+                        >
                             <WifiItem {...wifi} />
                         </TouchableOpacity>
                     ))
                 }
             </View>
+            <Portal>
+                <Modal visible={visible} onDismiss={hideModal} contentContainerStyle={styles.modalCtn}>
+                    <View>
+                        <Text style={{ marginBottom: 15, fontSize: 16 }}>
+                            Connecting to WI-FI: {'\n'}
+                            <Text style={styles.importantTxt}>{settingInfo?.SSID}</Text>
+                        </Text>
+                        <InputSecureText label='Password' placeholder='Password' key={'pass'} setSecureText={setPassword} />
+                    </View>
+                    <TouchableOpacity
+                        onPress={() => {
+                            if (settingInfo) {
+                                handleConnectPassword(settingInfo.SSID)
+                            }
+                        }}
+                    >
+                        <CustomBtn text='Connect' customStyle={{ backgroundColor: COLORS.skyBlue }} />
+                    </TouchableOpacity>
+                </Modal>
+            </Portal>
         </View>
     )
 }
@@ -165,5 +211,17 @@ const styles = StyleSheet.create({
     },
     wifiName: {
         fontSize: 17
+    },
+    //Modal
+    modalCtn: {
+        padding: 20,
+        width: '90%',
+        borderRadius: 10,
+        alignSelf: 'center',
+        backgroundColor: 'white',
+    },
+    importantTxt: {
+        fontSize: 16,
+        fontFamily: 'Lexend-Medium'
     }
 })

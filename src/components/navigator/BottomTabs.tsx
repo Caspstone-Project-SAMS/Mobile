@@ -138,7 +138,7 @@ const BottomTabs = () => {
                                     tintColor: color
                                 }}
                             /> */}
-                            <Ionicon name='wifi' size={25} color={color} />
+                            <Ionicon name='wifi' size={27} color={color} />
                             {focused && (
                                 <View style={styles.activeTabBar} />
                             )}
