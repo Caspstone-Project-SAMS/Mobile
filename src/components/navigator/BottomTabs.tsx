@@ -1,6 +1,7 @@
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
 import React, { useEffect } from 'react'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Ionicon from 'react-native-vector-icons/Ionicons';
 
 import Home from '../../screens/home/Home';
 import Class from '../../screens/class/Class';
@@ -129,14 +130,15 @@ const BottomTabs = () => {
                     tabBarLabel: '',
                     tabBarIcon: ({ color, size, focused }) => (
                         <>
-                            <Image
-                                source={require('../../assets/icons/sensorIcon.png')}
+                            {/* <Image
+                                source={<Ionicon/>}
                                 style={{
                                     width: 25,
                                     height: 25,
                                     tintColor: color
                                 }}
-                            />
+                            /> */}
+                            <Ionicon name='wifi' size={25} color={color} />
                             {focused && (
                                 <View style={styles.activeTabBar} />
                             )}
@@ -177,7 +179,7 @@ const styles = StyleSheet.create({
     activeTabBar: {
         position: 'absolute',
         top: -15,
-        right: '36%',
+        right: '32%',
         height: 6,
         width: 26,
         borderRadius: 4,

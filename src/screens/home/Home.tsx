@@ -19,6 +19,7 @@ import ActivityCard from './cards/ActivityCard'
 
 import { PermissionsAndroid } from 'react-native';
 import WifiManager from "react-native-wifi-reborn";
+import { GLOBAL_STYLES } from '../../assets/styles/styles'
 
 interface WeekDay {
   weekday: string;
@@ -90,7 +91,6 @@ const Home = () => {
     return week;
   };
 
-  //Man hinh trang, infinity log => chinh sua lai
   const grantedPermission = async () => {
     const granted = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
@@ -123,15 +123,13 @@ const Home = () => {
 
   useEffect(() => {
     if (wifiPermission === PermissionsAndroid.RESULTS.GRANTED) {
-      // You can now use react-native-wifi-reborn
       const getWifiOnPress = async () => {
-        let wifiList = await WifiManager.loadWifiList(); //wifiList will be Array<WifiEntry>
+        let wifiList = await WifiManager.loadWifiList();
         console.log('wifi list', wifiList);
       }
 
       getWifiOnPress();
     } else {
-      // Permission denied
       console.log("Denied to use Wifi");
     }
   }, [onClick, wifiPermission])
@@ -210,7 +208,7 @@ const Home = () => {
 
       <View style={styles.body}>
         <View style={styles.dashBoardCtn}>
-          <Text style={styles.titleLabel}>Today Attendance</Text>
+          <Text style={GLOBAL_STYLES.titleLabel}>Today Attendance</Text>
           <View style={{ flexDirection: "row", justifyContent: 'space-between', gap: 10 }}>
             <SmallCard
               titleIcon={require('../../assets/icons/upcoming_x3.png')}
@@ -259,7 +257,7 @@ const Home = () => {
 
         <View style={styles.classActivities}>
           <View style={styles.activitiesHeader}>
-            <Text style={styles.titleLabel}>Today Activites | {data.length}</Text>
+            <Text style={GLOBAL_STYLES.titleLabel}>Today Activities | {data.length}</Text>
             <TouchableOpacity>
               <Text style={{ color: FONT_COLORS.blueFontColor }}>View All</Text>
             </TouchableOpacity>

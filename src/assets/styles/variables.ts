@@ -14,6 +14,7 @@ export const COLORS = {
 
   errorLightRed: '#FE4436',
 
+  greenSystem: '#00D488',
   greenSpBold: '#24D164',
   greenBold: '#4ADE80',
   greenBase: '#86EFAC',
@@ -29,6 +30,7 @@ export const COLORS = {
   yellowBase: '#FBBF24',
 
   borderColor: '#B8B8B8',
+  dividerColor: '#9E9E9E',
 };
 
 export const FONTS = {
