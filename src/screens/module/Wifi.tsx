@@ -157,7 +157,7 @@ const Wifi = () => {
                             key={`wifi_${i}`}
                             onPress={() => {
                                 setSettingInfo(wifi);
-                                setVisible(!visible)
+                                setVisible(!visible);
                             }}
                         >
                             <WifiItem {...wifi} />

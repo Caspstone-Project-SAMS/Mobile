@@ -5,6 +5,7 @@ import { GLOBAL_STYLES } from '../../assets/styles/styles'
 import { COLORS } from '../../assets/styles/variables'
 import Wifi from './Wifi'
 import WifiManager from 'react-native-wifi-reborn'
+import SetUpModule from './SetUpModule'
 
 const Module = () => {
     const [selectedView, setSelectedView] = useState<'wifi' | 'module'>('wifi')
@@ -14,9 +15,7 @@ const Module = () => {
         const ssid = await WifiManager.getCurrentWifiSSID()
         setCurrentWifi(ssid)
     }
-    useEffect(() => {
-        getCurrentWifiSSID();
-    }, [])
+    getCurrentWifiSSID();
 
     return (
         <ScrollView style={styles.container}>
@@ -53,7 +52,13 @@ const Module = () => {
             </View>
 
             <View style={{ marginBottom: 40 }}>
-                <Wifi />
+                {
+                    selectedView === 'wifi' ? (
+                        <Wifi />
+                    ) : (
+                        <SetUpModule />
+                    )
+                }
             </View>
         </ScrollView>
     )
