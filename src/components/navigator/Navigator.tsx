@@ -7,12 +7,10 @@ import { RootState } from '../../redux/Store';
 
 const Navigator = () => {
   const userInfo = useSelector((state: RootState) => state.auth.userDetail)
-  const logined = true
   return (
     <NavigationContainer independent={true}>
-      {/* {userInfo?.token ? <AuthStack /> : <UnAuthStack />} */}
-      {/* {logined ? <AuthStack /> : <UnAuthStack />} */}
-      <AuthStack />
+      {userInfo?.token ? <AuthStack /> : <UnAuthStack />}
+      {/* <AuthStack /> */}
     </NavigationContainer>
   )
 }

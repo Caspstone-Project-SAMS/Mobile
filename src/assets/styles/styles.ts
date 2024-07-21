@@ -10,6 +10,11 @@ export const GLOBAL_STYLES = StyleSheet.create({
     paddingVertical: 5,
   },
   //ALIGNMENT
+  horizontalBetweenCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   horizontalCenter: {
     flexDirection: 'row',
     alignItems: 'center',

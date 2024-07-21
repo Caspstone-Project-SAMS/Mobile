@@ -37,13 +37,13 @@ const App: React.FC = () => {
 
   return (
     <Provider store={Store}>
-      <PaperProvider theme={appTheme}>
-        <SafeAreaView style={styles.container} onLayout={onLayoutRootView}>
+      <SafeAreaView style={styles.container} onLayout={onLayoutRootView}>
+        <PaperProvider theme={appTheme}>
           <ToastProvider>
             <Navigator />
           </ToastProvider>
-        </SafeAreaView>
-      </PaperProvider>
+        </PaperProvider>
+      </SafeAreaView>
     </Provider>
   );
 };

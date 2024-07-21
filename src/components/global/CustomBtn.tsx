@@ -28,7 +28,7 @@ const CustomBtn: React.FC<props> = ({ text, customStyle, colorTxt, icon }) => {
 
 const styles = StyleSheet.create({
     defaultStyle: {
-        backgroundColor: COLORS.skyBase
+        backgroundColor: COLORS.skyBlue
     },
     button: {
         display: 'flex',

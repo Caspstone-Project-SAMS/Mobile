@@ -8,19 +8,22 @@ import WifiManager, { WifiEntry } from "react-native-wifi-reborn";
 import WifiItem from '../../components/wifi/WifiItem';
 import { Toast } from 'react-native-toast-notifications';
 
-const SetUpModule = () => {
+type props = {
+    setVisible: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+const SetUpModule: React.FC<props> = ({ setVisible }) => {
     const [selectedWifi, setSelectedWifi] = useState<string>('aaaaa')
     const [onLoading, setOnLoading] = useState<boolean>(false);
     const [onClick, setOnClick] = useState<boolean>(false);
     const [wifiList, setWifiList] = useState<WifiEntry[]>([]);
-
-    const [visible, setVisible] = React.useState(false);
 
     const [password, setPassword] = useState("");
     const [wifiPermission, setWifiPermission] = useState();
 
     const showModal = () => setVisible(true);
     const hideModal = () => setVisible(false);
+
     const grantedPermission = async () => {
         const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
@@ -87,14 +90,14 @@ const SetUpModule = () => {
                     style={{ flex: 1 }}
                 />
                 <TouchableOpacity
-                    onPress={() => setVisible(!visible)}
+                    onPress={() => setVisible(true)}
                 >
                     <Entypo name='chevron-thin-down' size={20} />
                 </TouchableOpacity>
             </View>
+
             {/* Modal hereeee---- */}
-            <Provider>
-                <Portal>
+            {/* <Portal>
                     <Modal visible={visible} onDismiss={hideModal} contentContainerStyle={styles.modalCtn}>
                         <ScrollView style={{ height: '50%' }}>
                             <View>
@@ -128,8 +131,7 @@ const SetUpModule = () => {
                             </View>
                         </ScrollView>
                     </Modal>
-                </Portal>
-            </Provider>
+                </Portal> */}
         </View>
     )
 }
