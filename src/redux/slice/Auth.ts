@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { GoogleLogin_OnSuccess } from '../../models/auth/GoogleResponse';
 import { UserInfo } from '../../models/UserInfo';
 import axios, { AxiosError } from 'axios';
@@ -35,6 +35,16 @@ const initialState: AuthState = {
 //     console.log('err at show toast', error);
 //   }
 // };
+const updateUser = createAsyncThunk(
+  'auth/updateUser',
+  async (_, { rejectWithValue }) => {
+    const userAuth = await AsyncStorageHelpers.getObjData('userAuth');
+    if (userAuth) {
+      return JSON.parse(userAuth);
+    }
+    return rejectWithValue('User Info Not Found!');
+  },
+);
 
 const login = createAsyncThunk(
   'auth/login',
@@ -92,6 +102,9 @@ const AuthSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    //CreateAction
+
+    //Async thunk
     builder.addCase(login.pending, (state) => {
       return {
         ...state,
@@ -124,10 +137,18 @@ const AuthSlice = createSlice({
         loadingStatus: false,
       };
     });
+    //Auto login
+    builder.addCase(updateUser.fulfilled, (state, { payload }) => {
+      if (payload) {
+        state.authStatus = true;
+        state.loadingStatus = false;
+        state.userDetail = payload;
+      }
+    });
   },
 });
 
-export { login };
+export { login, updateUser };
 export const { logout } = AuthSlice.actions;
 
 export default AuthSlice.reducer;

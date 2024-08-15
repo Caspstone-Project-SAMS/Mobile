@@ -18,7 +18,16 @@ const getObjData = async (key: string) => {
   }
 };
 
+const removeValue = async (key: string) => {
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch (e) {
+    return null;
+  }
+};
+
 export const AsyncStorageHelpers = {
   storeObjData,
   getObjData,
+  removeValue,
 };

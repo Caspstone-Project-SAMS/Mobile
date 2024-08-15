@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { TextInput, MD3Colors, Text as PaperTxt, Button } from "react-native-paper";
 import { COLORS, FONT_COLORS } from "../../assets/styles/variables";
@@ -6,18 +6,47 @@ import { DividerWithTxt } from "../../components/global/DividerWithTxt";
 import { GLOBAL_STYLES } from "../../assets/styles/styles";
 import CustomBtn from "../../components/global/CustomBtn";
 import useDispatch from "../../redux/UseDispatch";
-import { login } from "../../redux/slice/Auth";
+import { login, updateUser } from "../../redux/slice/Auth";
+import { AsyncStorageHelpers } from "../../hooks/helpers/AsyncStorage";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/Store";
+import { ParamListBase, useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [secureTextEntry, setSecureTextEntry] = useState(true);
+    const userInfo = useSelector((state: RootState) => state.auth);
+
     const dispatch = useDispatch()
+    // const navigation = useNavigation()
+    const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
+
 
     const [focusInput, setFocusInput] = useState<string | undefined>();
     const handleLogin = async () => {
         await dispatch(login({ username: email, password }));
     };
+
+    // redirect to home if session valid - 7days
+    useEffect(() => {
+        const autoLogin = async () => {
+            const currentTime = new Date().getTime();
+            const oldSession = await AsyncStorageHelpers.getObjData('session');
+            if (oldSession) {
+                const { expiredTime } = JSON.parse(oldSession);
+                if (expiredTime >= currentTime) {
+                    dispatch(updateUser())
+                }
+            } else {
+                AsyncStorageHelpers.removeValue('userAuth');
+                AsyncStorageHelpers.removeValue('session');
+            }
+        }
+        autoLogin();
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -84,6 +113,7 @@ const Login: React.FC = () => {
                     style={{
                         marginVertical: 20,
                     }}
+                    onPress={() => { console.log("user info ", userInfo); }}
                 >
                     <PaperTxt style={styles.forgotPassTxt}>Forgot Password?</PaperTxt>
                 </TouchableOpacity>

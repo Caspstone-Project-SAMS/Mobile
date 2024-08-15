@@ -20,6 +20,7 @@ import ActivityCard from './cards/ActivityCard'
 import { PermissionsAndroid } from 'react-native';
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
 import { getAllSemester } from '../../redux/slice/Semester'
+import { AsyncStorageHelpers } from '../../hooks/helpers/AsyncStorage'
 
 interface WeekDay {
   weekday: string;
@@ -119,7 +120,6 @@ const Home = () => {
 
   useEffect(() => {
     console.log("Current Day selected----------------- ", moment(currentDay).format('DD/MM/YYYY'));
-
     // const lecturerId = userInfo?.result?.id
     // dispatch(getTodaySchedule({ lecturerId, semesterId }))
   }, [currentDay])
