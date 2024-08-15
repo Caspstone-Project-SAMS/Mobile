@@ -11,6 +11,7 @@ import {
 
 type Schedule = {
   data: ScheduleResponse[];
+  todaySchedules: ScheduleResponse[];
   loading: boolean;
   error: string;
 };
@@ -22,6 +23,7 @@ type ScheduleItem = {
 
 const initialState: Schedule = {
   data: [],
+  todaySchedules: [],
   loading: false,
   error: '',
 };
@@ -30,9 +32,9 @@ const serializeAxiosErr = (error: AxiosError) => {
   return {
     message: error.message,
     response: {
-      status: error.response.status,
-      data: error.response.data,
-      headers: error.response.headers,
+      status: error.response?.status,
+      data: error.response?.data,
+      headers: error.response?.headers,
     },
     config: error.config,
     code: error.code,
@@ -73,11 +75,10 @@ const getScheduleByDay = createAsyncThunk(
   ) => {
     const { lecturerId, semesterId, date } = arg;
     try {
-      const currentDay = moment().format('YYYY-MM-DD');
       const getPromise = await ScheduleService.getScheduleByDay(
         lecturerId,
         semesterId,
-        date, // startday & endday in one day
+        date, // startday & endday in one day - YYYY-MM-DD
         date,
       );
       return getPromise;
@@ -105,20 +106,23 @@ const ScheduleSlice = createSlice({
       state.loading = false;
       const { payload } = action;
 
+      state.data = [];
       payload.forEach((newItem: ScheduleResponse) => {
         //Calculate schedule status
         const formattedValue = formatScheduleRepsonse(newItem);
+        state.data.push(formattedValue);
 
-        const existingItemIndex = state.data.findIndex(
-          (item) =>
-            item.date === formattedValue.date &&
-            item.slotNumber === formattedValue.slotNumber,
-        );
-        if (existingItemIndex !== -1) {
-          state.data[existingItemIndex] = formattedValue;
-        } else {
-          state.data.push(formattedValue);
-        }
+        //Hold previous data and pushing new in array
+        // const existingItemIndex = state.data.findIndex(
+        //   (item) =>
+        //     item.date === formattedValue.date &&
+        //     item.slotNumber === formattedValue.slotNumber,
+        // );
+        // if (existingItemIndex !== -1) {
+        //   state.data[existingItemIndex] = formattedValue;
+        // } else {
+        //   state.data.push(formattedValue);
+        // }
       });
     });
     builder.addCase(getTodaySchedule.rejected, (state, action) => {
@@ -131,6 +135,17 @@ const ScheduleSlice = createSlice({
       if (errMsg) {
         state.error = errMsg;
       }
+    });
+    builder.addCase(getScheduleByDay.fulfilled, (state, { payload }) => {
+      state.loading = false;
+
+      state.data = [];
+      payload.forEach((newItem: ScheduleResponse) => {
+        //Calculate schedule status
+        const formattedValue = formatScheduleRepsonse(newItem);
+        state.data.push(formattedValue);
+        state.todaySchedules.push(formattedValue);
+      });
     });
   },
 });

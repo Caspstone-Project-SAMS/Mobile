@@ -41,4 +41,11 @@ export const Slots = [
     timeStart: '19:45',
     timeEnd: '10:00',
   },
+  {
+    id: 7,
+    name: 'Slot_7',
+    duration: 135,
+    timeStart: '20:00',
+    timeEnd: '22:15',
+  },
 ];

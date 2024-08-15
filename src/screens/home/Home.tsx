@@ -11,7 +11,7 @@ import { useSelector } from 'react-redux'
 import { RootState } from '../../redux/Store'
 
 import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
-import { getTodaySchedule } from '../../redux/slice/Schedule'
+import { getScheduleByDay, getTodaySchedule } from '../../redux/slice/Schedule'
 import { Slots } from '../../models/schedule/Slot'
 import { DayCard } from './cards/DayCard'
 import SmallCard from './cards/SmallCard'
@@ -21,11 +21,10 @@ import { PermissionsAndroid } from 'react-native';
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
 import { getAllSemester } from '../../redux/slice/Semester'
 import { AsyncStorageHelpers } from '../../hooks/helpers/AsyncStorage'
+import { ScheduleResponse } from '../../models/schedule/ScheduleResponse'
+import { validateStatusSchedule } from '../../hooks/helpers/ScheduleHelper'
+import { HelperService } from '../../hooks/helpers/HelperFunc'
 
-interface WeekDay {
-  weekday: string;
-  date: Date;
-}
 const { width } = Dimensions.get('window');
 moment.updateLocale('ko', {
   week: {
@@ -33,9 +32,18 @@ moment.updateLocale('ko', {
     doy: 1,
   }
 })
+
+type Dashboard = {
+  curUpClass: ScheduleResponse,
+  upcomingTxt: string,
+  todayClass: string,
+  subjectPrepare: string[]
+}
+
 const Home = () => {
-  const [onClick, setOnClick] = useState<boolean>(false);
-  const [wifiPermission, setWifiPermission] = useState();
+  const { data, todaySchedules, error } = useSelector((state: RootState) => state.schedule)
+  const userInfo = useSelector((state: RootState) => state.auth.userDetail)
+  const semesters = useSelector((state: RootState) => state.semester.data)
 
   const swiper = useRef();
   const toast = useToast();
@@ -43,11 +51,11 @@ const Home = () => {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const sampleData = ['MLN1', 'MLN2', 'MLN3'];
 
+  const [wifiPermission, setWifiPermission] = useState();
+  const [onClick, setOnClick] = useState<boolean>(false);
   const [currentDay, setCurrentDay] = useState(new Date());
-
-  const { data, error } = useSelector((state: RootState) => state.schedule)
-  const userInfo = useSelector((state: RootState) => state.auth.userDetail)
-  const semesters = useSelector((state: RootState) => state.semester.data)
+  const [currentSemester, setCurrentSemester] = useState<number>(5);
+  const [dashBoardInfo, setDashboardInfo] = useState<Dashboard | undefined>(undefined)
 
   const weeks = React.useMemo(() => {
     const start = moment().add(0, 'weeks').startOf('week');
@@ -64,20 +72,91 @@ const Home = () => {
     });
   }, []);
 
-  const getWeekFromDate = (inputDate: Date): WeekDay[] => {
-    const startOfWeek = moment(inputDate).startOf('week');
-    const week: WeekDay[] = [];
 
-    for (let i = 0; i < 7; i++) {
-      const date = moment(startOfWeek).add(i, 'days').toDate();
-      week.push({
-        weekday: moment(date).format('ddd'),
-        date: date,
-      });
+  //Return current|next slot, upcoming class, subject prepare, today class
+  const lectureDashboardCalculator = () => {
+    try {
+      let hasEventToday = false
+      let pastEvent = 0;
+      const dashboardInfoVal: Dashboard = {
+        curUpClass: {
+          classID: 0,
+          classCode: '',
+          date: '',
+          endTime: '',
+          roomName: '',
+          scheduleID: 0,
+          slotNumber: 0,
+          startTime: '',
+          subjectCode: '',
+          status: 'Past'
+        },
+        upcomingTxt: '',
+        todayClass: '',
+        subjectPrepare: []
+      }
+      const schedules = data;
+      const today = moment(new Date()).format('YYYY-MM-DD');
+      if (schedules && schedules.length > 0) {
+        let isSetCurrentClass = false
+        //Current date
+        const todaySchedules = schedules.map(schedule => {
+          if (schedule.date === today) {
+            const startDateTime = new Date(`${schedule.date}T${schedule.startTime}`);
+            const endDateTime = new Date(`${schedule.date}T${schedule.endTime}`);
+
+            const status = validateStatusSchedule(startDateTime, endDateTime);
+            if (status === 'Current' || status === 'Upcoming') {
+              if (status === 'Current') {
+                dashboardInfoVal.curUpClass = { ...schedule, status: status };
+                isSetCurrentClass = true
+              } else if (!isSetCurrentClass) {
+                dashboardInfoVal.curUpClass = { ...schedule, status: status };
+              }
+              dashboardInfoVal.subjectPrepare.push(schedule.subjectCode)
+              hasEventToday = true;
+            }
+            if (status === 'Past') {
+              pastEvent++;
+            }
+            return { ...schedule, status }
+          }
+        }).filter(item => item !== undefined)
+        // calculate upcoming, class left, subject prepare, when time not the end of the day
+        if (hasEventToday) {
+          let isFirst = false;
+          //Subject prepare, upcomingtxt
+          todaySchedules.forEach(schedule => {
+            if (schedule.status === 'Upcoming') {
+              if (!isFirst) {
+                dashboardInfoVal.upcomingTxt = schedule.subjectCode;
+                isFirst = true;
+              }
+              dashboardInfoVal.subjectPrepare.push(schedule.subjectCode);
+            }
+          })
+          if (pastEvent !== 0) { // sau khi co tiet hoc ket thuc 
+            dashboardInfoVal.todayClass = `${pastEvent}/${todaySchedules.length}`
+          } else { // past event = 0, bat dau ngay
+            const futureEvents = todaySchedules.filter(item => item.status === 'Upcoming')
+            if (futureEvents.length > 0) { // chua bat dau tiet hoc
+              dashboardInfoVal.todayClass = `0/${todaySchedules.length}`
+            } else { // hoan thanh ngay
+              dashboardInfoVal.todayClass = `${todaySchedules.length}/${todaySchedules.length}`
+            }
+          }
+
+          const subjectArr = dashboardInfoVal.subjectPrepare
+          dashboardInfoVal.subjectPrepare = HelperService.removeDuplicates(subjectArr);
+          setDashboardInfo(dashboardInfoVal)
+        }
+      }
+      // console.log("cateried ", todaySchedules);
+      console.log("dashboardInfo ", dashboardInfoVal);
+    } catch (error) {
+      console.log('error when calculating dashboard');
     }
-
-    return week;
-  };
+  }
 
   const grantedPermission = async () => {
     const granted = await PermissionsAndroid.request(
@@ -106,12 +185,13 @@ const Home = () => {
     if (semesters.length !== 0) {
       semesters.forEach(item => {
         if (item.semesterStatus === 2) {
+          setCurrentSemester(item.semesterID);
           semesterId = item.semesterID;
         }
       })
     }
     if (lecturerId && semesterId) {
-      dispatch(getTodaySchedule({ lecturerId, semesterId }))
+      dispatch(getTodaySchedule({ lecturerId, semesterId }));
     }
 
     const permission = grantedPermission();
@@ -119,14 +199,17 @@ const Home = () => {
   }, [semesters])
 
   useEffect(() => {
-    console.log("Current Day selected----------------- ", moment(currentDay).format('DD/MM/YYYY'));
-    // const lecturerId = userInfo?.result?.id
-    // dispatch(getTodaySchedule({ lecturerId, semesterId }))
+    const daySelected = moment(currentDay).format('YYYY-MM-DD');
+    const lecturerId = userInfo?.result?.id;
+    console.log("Current Day selected----------------- ", daySelected);
+    if (lecturerId && semesters && currentSemester) {
+      dispatch(getScheduleByDay({ lecturerId, semesterId: currentSemester, date: daySelected }))
+    }
   }, [currentDay])
 
   useEffect(() => {
-    // console.log("Current Day selected ", currentDay);
-  }, [data, toast, currentDay]);
+    lectureDashboardCalculator();
+  }, [todaySchedules]);
 
   return (
     <ScrollView style={styles.container}>
@@ -134,14 +217,23 @@ const Home = () => {
         <View style={styles.title}>
           <View style={styles.userInfoCtn}>
             <Image
-              source={require('../../assets/imgs/music is powerful.jpg')}
+              source={
+                userInfo?.result?.avatar ? (
+                  {
+                    uri: userInfo.result.avatar,
+                  }
+                ) :
+                  (
+                    require('../../assets/imgs/lecturer_icon.png')
+                  )
+              }
               style={styles.avatar}
             />
             <View>
-              <Text style={styles.userName}>
-                Nguyen Duc
+              <Text onPress={() => { lectureDashboardCalculator() }} style={styles.userName}>
+                {userInfo?.result?.displayName}
               </Text>
-              <Text>Front-end Developer</Text>
+              <Text>{userInfo?.result?.role.name}</Text>
             </View>
           </View>
 
@@ -200,14 +292,14 @@ const Home = () => {
             <SmallCard
               titleIcon={require('../../assets/icons/upcoming_x3.png')}
               titleTxt={`Upcoming Class`}
-              detail='SWP391'
+              detail={dashBoardInfo?.upcomingTxt ? (dashBoardInfo.curUpClass.classCode) : ('Done')}
               subDetail='View Detail'
               key={'dashboardCard1'}
             />
             <SmallCard
               titleIcon={require('../../assets/icons/classIcon.png')}
               titleTxt='Today Class'
-              detail='3/5'
+              detail={dashBoardInfo?.todayClass ? (dashBoardInfo.todayClass) : ('Done')}
               subDetail='Class done'
               key={'dashboardCard2'}
             />
@@ -220,24 +312,26 @@ const Home = () => {
               <Text style={[styles.titleTxt, { paddingRight: 48 }]}>Subject Prepare</Text>
             </View>
             <View style={styles.subjectDetailCtn}>
-              {sampleData.map((item, i) => {
-                if (i % 2 === 0) {
-                  if (i === sampleData.length - 1) {
-                    return <Text key={`subject_${i}`} style={[styles.detail, { textAlign: 'center', width: '100%' }]}>{item}</Text>
+              {
+                dashBoardInfo?.subjectPrepare ? dashBoardInfo.subjectPrepare.map((item, i) => {
+                  if (i % 2 === 0) { // so chan thi render khac nhau, i = 0 => true
+                    if (i === dashBoardInfo.subjectPrepare.length - 1) { // Neu do dai bang 1 thi chi return ve 1 item
+                      return <Text key={`subject_${i}`} style={[styles.detail, { textAlign: 'center', width: '100%' }]}>{item}</Text>
+                    }
+                    return ( //Return 2 item va 1 divider
+                      <View key={`record_${i}`} style={{ flexDirection: 'row' }}>
+                        <Text style={styles.detail}>{item}</Text>
+                        {i + 1 < dashBoardInfo.subjectPrepare.length && (
+                          <>
+                            <View style={styles.divider} />
+                            <Text style={styles.detail}>{dashBoardInfo.subjectPrepare[i + 1]}</Text>
+                          </>
+                        )}
+                      </View>
+                    )
                   }
-                  return (
-                    <View key={`record_${i}`} style={{ flexDirection: 'row' }}>
-                      <Text style={styles.detail}>{item}</Text>
-                      {i + 1 < sampleData.length && (
-                        <>
-                          <View style={styles.divider} />
-                          <Text style={styles.detail}>{sampleData[i + 1]}</Text>
-                        </>
-                      )}
-                    </View>
-                  )
-                }
-              })}
+                }) : (<Text style={styles.detail}>Done</Text>)
+              }
             </View>
           </View>
         </View>

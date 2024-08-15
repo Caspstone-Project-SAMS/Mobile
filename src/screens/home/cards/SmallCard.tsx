@@ -18,7 +18,10 @@ const SmallCard: React.FC<props> = ({ detail, subDetail, titleIcon, titleTxt }) 
                 </View>
                 <Text style={styles.titleTxt}>{titleTxt}</Text>
             </View>
-            <Text style={styles.detail}>{detail}</Text>
+            <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.detail}>{detail}</Text>
             <Text style={{ fontSize: 14 }}>{subDetail}</Text>
         </View>
     )
@@ -56,7 +59,8 @@ const styles = StyleSheet.create({
     },
     detail: {
         fontSize: 18,
-        fontFamily: 'Lexend-Medium'
+        fontFamily: 'Lexend-Medium',
+        width: '105%'
     },
 })
 

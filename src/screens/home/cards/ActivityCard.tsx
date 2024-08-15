@@ -19,7 +19,7 @@ const ActivityCard: React.FC<props> = ({ room, status, subjectCode, time }) => {
                 </View>
                 <View style={{ gap: 2, marginLeft: 10 }}>
                     <Text style={styles.mainTxt}>{subjectCode}</Text>
-                    <Text style={styles.subTxt}>{room}</Text>
+                    <Text style={styles.subTxt}>Ro.{room}</Text>
                 </View>
             </View>
             <View style={styles.right}>
