@@ -13,7 +13,7 @@ const createDateString = (value: string): DateString => {
 
 const getScheduleByDay = async (
   lecturerId: string,
-  semesterId: string,
+  semesterId: number,
   startDate: string,
   endDate: string,
 ) => {

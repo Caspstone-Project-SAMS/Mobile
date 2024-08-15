@@ -18,8 +18,8 @@ import SmallCard from './cards/SmallCard'
 import ActivityCard from './cards/ActivityCard'
 
 import { PermissionsAndroid } from 'react-native';
-import WifiManager from "react-native-wifi-reborn";
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
+import { getAllSemester } from '../../redux/slice/Semester'
 
 interface WeekDay {
   weekday: string;
@@ -33,19 +33,6 @@ moment.updateLocale('ko', {
   }
 })
 const Home = () => {
-
-  // const granted = PermissionsAndroid.request(
-  //   PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-  //   {
-  //     title: 'Location permission is required for WiFi connections',
-  //     message:
-  //       'SAMS application needs location permission as this is required  ' +
-  //       'to scan for wifi networks.',
-  //     buttonNegative: 'DENY',
-  //     buttonPositive: 'ALLOW',
-  //   },
-  // )
-
   const [onClick, setOnClick] = useState<boolean>(false);
   const [wifiPermission, setWifiPermission] = useState();
 
@@ -59,6 +46,7 @@ const Home = () => {
 
   const { data, error } = useSelector((state: RootState) => state.schedule)
   const userInfo = useSelector((state: RootState) => state.auth.userDetail)
+  const semesters = useSelector((state: RootState) => state.semester.data)
 
   const weeks = React.useMemo(() => {
     const start = moment().add(0, 'weeks').startOf('week');
@@ -74,7 +62,6 @@ const Home = () => {
       });
     });
   }, []);
-
 
   const getWeekFromDate = (inputDate: Date): WeekDay[] => {
     const startOfWeek = moment(inputDate).startOf('week');
@@ -107,39 +94,39 @@ const Home = () => {
   }
 
   useEffect(() => {
-    const cur = moment().format('YYYY-MM-DD');
+    if (semesters.length === 0) {
+      dispatch(getAllSemester());
+    }
+  }, [])
+
+  useEffect(() => {
     const lecturerId = userInfo?.result?.id
-    const semesterId = '2' //fix cung ky hoc
+    let semesterId = 5
+    if (semesters.length !== 0) {
+      semesters.forEach(item => {
+        if (item.semesterStatus === 2) {
+          semesterId = item.semesterID;
+        }
+      })
+    }
     if (lecturerId && semesterId) {
       dispatch(getTodaySchedule({ lecturerId, semesterId }))
     }
 
-    // console.log("In here ",
-    //   getWeekFromDate(cur)
-    // );
     const permission = grantedPermission();
     permission.then(info => setWifiPermission(info)).catch(err => "Got err here bro")
-  }, [])
+  }, [semesters])
 
   useEffect(() => {
-    if (wifiPermission === PermissionsAndroid.RESULTS.GRANTED) {
-      const getWifiOnPress = async () => {
-        let wifiList = await WifiManager.loadWifiList();
-        console.log('wifi list', wifiList);
-      }
+    console.log("Current Day selected----------------- ", moment(currentDay).format('DD/MM/YYYY'));
 
-      getWifiOnPress();
-    } else {
-      console.log("Denied to use Wifi");
-    }
-  }, [onClick, wifiPermission])
+    // const lecturerId = userInfo?.result?.id
+    // dispatch(getTodaySchedule({ lecturerId, semesterId }))
+  }, [currentDay])
 
   useEffect(() => {
-    if (data) {
-      // toast.show('Welcome!', { type: 'success' });
-      console.log("Data", data);
-    }
-  }, [data, toast]);
+    // console.log("Current Day selected ", currentDay);
+  }, [data, toast, currentDay]);
 
   return (
     <ScrollView style={styles.container}>

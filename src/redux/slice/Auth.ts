@@ -4,6 +4,8 @@ import { UserInfo } from '../../models/UserInfo';
 import axios, { AxiosError } from 'axios';
 import AuthService from '../../hooks/Auth';
 import { useToast } from 'react-native-toast-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AsyncStorageHelpers } from '../../hooks/helpers/AsyncStorage';
 
 interface AuthState {
   authStatus: boolean;
@@ -97,9 +99,16 @@ const AuthSlice = createSlice({
       };
     });
     builder.addCase(login.fulfilled, (state, action) => {
-      // console.log('In the case fulfilled, ', action);
       const { payload } = action;
-      // showToast('Login successfully!', 'success');
+
+      const session = {
+        loginTime: new Date().getTime(),
+        expiredTime: new Date().getTime() + 604800000, //7 days
+      };
+
+      AsyncStorageHelpers.storeObjData('userAuth', JSON.stringify(payload));
+      AsyncStorageHelpers.storeObjData('session', JSON.stringify(session));
+
       return {
         ...state,
         authStatus: true,

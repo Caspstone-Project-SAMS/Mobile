@@ -63,9 +63,9 @@ const SetUpModule: React.FC<props> = ({ setVisible }) => {
                     setTimeout(() => {
                         setOnLoading(false);
                         setWifiList(list)
-                        list.map(item => {
-                            console.log('wifi item', item);
-                        })
+                        // list.map(item => {
+                        //     console.log('wifi item', item);
+                        // })
                     }, 1200)
                 }).catch(err => {
                     setOnLoading(false);
