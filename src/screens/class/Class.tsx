@@ -1,130 +1,66 @@
 import { View, StyleSheet, ScrollView, Image } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Text, TextInput } from 'react-native-paper'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 
-import { COLORS } from '../../assets/styles/variables'
+import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
 import DashboardCard from './cards/DashboardCard'
 import StudentActivityCard from './cards/StudentActivityCard'
+import { Slots } from '../../models/schedule/Slot'
+import ActivityCard from '../home/cards/ActivityCard'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../redux/Store'
+import useDispatch from '../../redux/UseDispatch'
+import { getTodaySchedule } from '../../redux/slice/Schedule'
 
 
-const Class = () => {
+const Class = ({ navigation }) => {
     const [searchVal, setSearchVal] = useState<string>('')
     const [selectedView, setSelectedView] = useState<'list' | 'pending' | 'absent'>('list')
+    const { todaySchedules } = useSelector((state: RootState) => state.schedule);
+    const dispatch = useDispatch();
+    const userDetail = useSelector((state: RootState) => state.auth.userDetail?.result)
+    const semesters = useSelector((state: RootState) => state.semester.data)
+
+    useEffect(() => {
+        const currentSemester = semesters.filter(item => item.semesterStatus === 2)
+        if (todaySchedules.length === 0 && userDetail) {
+            dispatch(getTodaySchedule({ lecturerId: userDetail.id, semesterId: currentSemester[0].semesterID }))
+        }
+    }, [])
 
     return (
         <ScrollView style={styles.container}>
-            <View style={styles.header}>
-                <View style={[styles.headerTitle, GLOBAL_STYLES.horizontalCenter]}>
-                    <Text style={{ fontFamily: 'Lexend-Regular', fontSize: 18 }}>
-                        Class Activity
-                    </Text>
-                    <View style={[GLOBAL_STYLES.horizontalCenter, { gap: 10 }]}>
-                        <Image style={styles.titleIcon} source={require('../../assets/icons/plusIconBtn.png')} />
-                        <Image style={styles.titleIcon} source={require('../../assets/icons/filterIcon.png')} />
-                    </View>
-                </View>
-                <View style={styles.dashboardCardsCtn}>
-                    <View style={styles.dashboardRow}>
-                        <DashboardCard label='Attendance' detail='35' theme='info' key={'1'} />
-                        <DashboardCard label='Attended' detail='26' theme='success' key={'2'} />
-                    </View>
-                    <View style={styles.dashboardRow}>
-                        <DashboardCard label='Exemptions' detail='2' theme='warning' key={'3'} />
-                        <DashboardCard label='Absent' detail='1' theme='danger' key={'4'} />
-                    </View>
-                </View>
-            </View>
-            <View style={styles.body}>
-                <View style={[
-                    GLOBAL_STYLES.horizontalCenter,
-                    { gap: 30, marginBottom: 24 }
-                ]}>
-                    <View style={styles.classInfo}>
-                        <Text style={styles.infoTxt}>Subject: MLN131</Text>
-                        <Text style={styles.infoTxt}>Class: NJS1713_Half 1</Text>
-                    </View>
-                    <TextInput
-                        mode="outlined"
-                        placeholder="Search.."
-                        style={[styles.searchBox, styles.shadow]}
-                        right={<TextInput.Icon
-                            icon={'magnify'}
-                            onPress={() => { console.log("hehe") }}
-                        />}
-                        onChangeText={val => setSearchVal(val)}
-                    />
+            <View style={styles.classActivities}>
+                <View style={styles.activitiesHeader}>
+                    <Text style={GLOBAL_STYLES.titleLabel}>Today Activities | {todaySchedules.length}</Text>
+                    <TouchableOpacity>
+                        <Text style={{ color: FONT_COLORS.blueFontColor }}>View All</Text>
+                    </TouchableOpacity>
                 </View>
 
-                <View style={{ flex: 1 }}>
-                    <View style={styles.filterListCtn}>
-                        <View style={styles.filterBtn}>
-                            <TouchableOpacity
-                                onPress={() => setSelectedView('list')}
-                            >
-                                <Text style={[styles.filterBtnTxt,
-                                selectedView === 'list' && styles.onSelectedBtn
-                                ]}>List</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <View style={styles.filterBtn}>
-                            <TouchableOpacity
-                                onPress={() => setSelectedView('pending')}
-                            >
-                                <Text style={[styles.filterBtnTxt,
-                                selectedView === 'pending' && styles.onSelectedBtn
-                                ]}>Pending</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <View style={styles.filterBtn}>
-                            <TouchableOpacity
-                                onPress={() => setSelectedView('absent')}
-                            >
-                                <Text style={[styles.filterBtnTxt,
-                                selectedView === 'absent' && styles.onSelectedBtn
-                                ]}>Absent</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-
-                    <View style={styles.studentList}>
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                        <StudentActivityCard />
-                    </View>
+                <View style={{ gap: 10 }}>
+                    {
+                        todaySchedules.map((item, i) => {
+                            const timeSlot = Slots[item.slotNumber - 1].timeStart + ' - ' + Slots[item.slotNumber - 1].timeEnd
+                            return (
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        navigation.navigate('ClassDetail', { schedule: item })
+                                    }}
+                                    key={`schedule_${i}`}
+                                >
+                                    <ActivityCard
+                                        room={item.roomName}
+                                        status={item.status ?? 'Past'}
+                                        subjectCode={item.subjectCode}
+                                        time={timeSlot}
+                                    />
+                                </TouchableOpacity>
+                            )
+                        })
+                    }
                 </View>
             </View>
         </ScrollView>
@@ -198,6 +134,17 @@ const styles = StyleSheet.create({
         color: '#FFF'
     },
     studentList: {},
+
+    //Today activities
+    classActivities: {
+        marginTop: 5,
+        marginBottom: 25
+    },
+    activitiesHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+    }
 })
 
 export default Class

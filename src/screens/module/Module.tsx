@@ -101,9 +101,11 @@ const Module = () => {
         } else {
             const promise = ModuleService.setUpWifi(selectedWifi, passwordForModule);
             setOnFetchLoading(true);
+            // Toast.show(`Setup ${selectedWifi} - ${passwordForModule}`, { type: 'success', placement: 'top' })
+
             promise.then(data => {
                 setOnFetchLoading(false);
-                Toast.show('Setup successfully', { type: 'success', placement: 'top' })
+                Toast.show(`Setup ${selectedWifi} for module successfully`, { type: 'success', placement: 'top' })
                 setSelectedView('wifi');
             }).catch(err => {
                 setOnFetchLoading(false);
@@ -252,7 +254,7 @@ const Module = () => {
                                         <TouchableOpacity
                                             key={`wifi_modal_${i}`}
                                             onPress={() => {
-                                                console.log("On selecting wifi ", wifi.SSID);
+                                                console.log("selecting ", wifi.SSID);
                                                 setSelectedWifi(wifi.SSID);
                                                 setVisible(!visible);
                                             }}

@@ -49,13 +49,12 @@ const Home = () => {
   const toast = useToast();
   const dispatch = useDispatch();
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
-  const sampleData = ['MLN1', 'MLN2', 'MLN3'];
 
   const [wifiPermission, setWifiPermission] = useState();
   const [onClick, setOnClick] = useState<boolean>(false);
   const [currentDay, setCurrentDay] = useState(new Date());
   const [currentSemester, setCurrentSemester] = useState<number>(5);
-  const [dashBoardInfo, setDashboardInfo] = useState<Dashboard | undefined>(undefined)
+  const [dashBoardInfo, setDashboardInfo] = useState<Dashboard | undefined>(undefined);
 
   const weeks = React.useMemo(() => {
     const start = moment().add(0, 'weeks').startOf('week');

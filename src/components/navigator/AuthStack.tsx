@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Home from '../../screens/home/Home';
 import ScheduleSwiper from '../swiper/ScheduleSwiper';
 import BottomTabs from './BottomTabs';
+import ClassDetail from '../../screens/class/ClassDetail';
 
 
 
@@ -17,6 +18,7 @@ const AuthStack = () => {
             }}
         >
             <Stack.Screen name="BottomRoot" component={BottomTabs} />
+            <Stack.Screen name="ClassDetail" component={ClassDetail} />
             <Stack.Screen name="Home" component={Home} />
             <Stack.Screen name="ScheduleSwipe" component={ScheduleSwiper} />
         </Stack.Navigator>

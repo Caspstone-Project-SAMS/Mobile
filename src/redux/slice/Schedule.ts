@@ -107,10 +107,12 @@ const ScheduleSlice = createSlice({
       const { payload } = action;
 
       state.data = [];
+      state.todaySchedules = [];
       payload.forEach((newItem: ScheduleResponse) => {
         //Calculate schedule status
         const formattedValue = formatScheduleRepsonse(newItem);
         state.data.push(formattedValue);
+        state.todaySchedules.push(formattedValue);
 
         //Hold previous data and pushing new in array
         // const existingItemIndex = state.data.findIndex(
@@ -144,7 +146,6 @@ const ScheduleSlice = createSlice({
         //Calculate schedule status
         const formattedValue = formatScheduleRepsonse(newItem);
         state.data.push(formattedValue);
-        state.todaySchedules.push(formattedValue);
       });
     });
   },

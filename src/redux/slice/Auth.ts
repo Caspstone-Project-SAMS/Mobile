@@ -1,10 +1,8 @@
-import { createAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { GoogleLogin_OnSuccess } from '../../models/auth/GoogleResponse';
 import { UserInfo } from '../../models/UserInfo';
 import axios, { AxiosError } from 'axios';
 import AuthService from '../../hooks/Auth';
-import { useToast } from 'react-native-toast-notifications';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AsyncStorageHelpers } from '../../hooks/helpers/AsyncStorage';
 
 interface AuthState {
@@ -49,7 +47,6 @@ const updateUser = createAsyncThunk(
 const login = createAsyncThunk(
   'auth/login',
   async (arg: { username: string; password: string }, { rejectWithValue }) => {
-    // console.log('Imhereeeeeeee ');
     const { username, password } = arg;
     try {
       const loginPromise = AuthService.login(username, password);
