@@ -1,6 +1,6 @@
-import { View, StyleSheet, ScrollView, Image } from 'react-native'
+import { View, StyleSheet, ScrollView, Image, Dimensions } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { Text, TextInput } from 'react-native-paper'
+import { Modal, Text, TextInput } from 'react-native-paper'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 
 import { COLORS } from '../../assets/styles/variables'
@@ -11,6 +11,10 @@ import Title from '../../components/Title'
 import { Navigation } from '../../hooks/navigation/Navigation'
 import { Attendance } from '../../models/Attendance'
 import { AttendanceService } from '../../hooks/Attendance'
+import DropDownPicker from 'react-native-dropdown-picker'
+
+
+const { width } = Dimensions.get('window');
 
 const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
     const { schedule: { classCode, classID, date, endTime, roomName, scheduleID, slotNumber, startTime, status, subjectCode } } = route.params
@@ -19,6 +23,14 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
     const [selectedView, setSelectedView] = useState<'list' | 'pending' | 'absent'>('list');
     const [studentList, setStudentList] = useState<Attendance[]>([]);
     const [filteredList, setFilteredList] = useState<Attendance[]>([]);
+
+    const [isOpenActions, setIsOpenActions] = useState<boolean>(false)
+    const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false)
+
+    const hideModal = () => {
+        setIsOpenActions(false)
+    }
+    const containerStyle = { backgroundColor: 'white', padding: 20 };
 
     useEffect(() => {
         const promise = AttendanceService.getAttendanceByScheduleId(scheduleID)
@@ -32,6 +44,26 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
         })
     }, [])
 
+    useEffect(() => {
+        switch (selectedView) {
+            case 'list':
+                setFilteredList(studentList)
+                break;
+            case 'absent':
+                {
+                    const filter = studentList.filter(student => student.attendanceStatus === 2);
+                    setFilteredList(filter)
+                }
+                break;
+            case 'pending':
+                const filter = studentList.filter(student => student.attendanceStatus === 0);
+                setFilteredList(filter)
+                break;
+            default:
+                break;
+        }
+    }, [selectedView])
+
     return (
         <ScrollView style={styles.container}>
             <Title navigation={navigation} title='Class Activity' />
@@ -41,9 +73,26 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                         {classCode}
                     </Text>
                     <View style={[GLOBAL_STYLES.horizontalCenter, { gap: 10 }]}>
-                        <Image style={styles.titleIcon} source={require('../../assets/icons/plusIconBtn.png')} />
-                        <Image style={styles.titleIcon} source={require('../../assets/icons/filterIcon.png')} />
+                        <View style={{ position: 'relative' }}>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setIsOpenActions(!isOpenActions)
+                                }}
+                            >
+                                <Image style={styles.titleIcon} source={require('../../assets/icons/plusIconBtn.png')} />
+                            </TouchableOpacity>
+                            <View style={[styles.actionsModal, { display: isOpenActions ? 'flex' : 'none' }]}>
+                                <Text style={styles.actionItem}>Take attendance mode</Text>
+                                <Text style={styles.actionItem}>Set up modules</Text>
+                            </View>
+                        </View>
+                        <View style={{ position: 'relative' }}>
+                            <TouchableOpacity>
+                                <Image style={styles.titleIcon} source={require('../../assets/icons/filterIcon.png')} />
+                            </TouchableOpacity>
+                        </View>
                     </View>
+
                 </View>
                 <View style={styles.dashboardCardsCtn}>
                     <View style={styles.dashboardRow}>
@@ -71,7 +120,7 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                         style={[styles.searchBox, styles.shadow]}
                         right={<TextInput.Icon
                             icon={'magnify'}
-                            onPress={() => { console.log("hehe") }}
+                        // onPress={() => { console.log("hehe") }}
                         />}
                         onChangeText={val => setSearchVal(val)}
                     />
@@ -83,27 +132,39 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                             <TouchableOpacity
                                 onPress={() => setSelectedView('list')}
                             >
-                                <Text style={[styles.filterBtnTxt,
-                                selectedView === 'list' && styles.onSelectedBtn
-                                ]}>List</Text>
+                                <Text
+                                    style={[
+                                        styles.filterBtnTxt,
+                                        selectedView === 'list' && styles.onSelectedBtn
+                                    ]}>
+                                    List
+                                </Text>
                             </TouchableOpacity>
                         </View>
                         <View style={styles.filterBtn}>
                             <TouchableOpacity
                                 onPress={() => setSelectedView('pending')}
                             >
-                                <Text style={[styles.filterBtnTxt,
-                                selectedView === 'pending' && styles.onSelectedBtn
-                                ]}>Pending</Text>
+                                <Text
+                                    style={[
+                                        styles.filterBtnTxt,
+                                        selectedView === 'pending' && styles.onSelectedBtn
+                                    ]}>
+                                    Pending
+                                </Text>
                             </TouchableOpacity>
                         </View>
                         <View style={styles.filterBtn}>
                             <TouchableOpacity
                                 onPress={() => setSelectedView('absent')}
                             >
-                                <Text style={[styles.filterBtnTxt,
-                                selectedView === 'absent' && styles.onSelectedBtn
-                                ]}>Absent</Text>
+                                <Text
+                                    style={[
+                                        styles.filterBtnTxt,
+                                        selectedView === 'absent' && styles.onSelectedBtn
+                                    ]}>
+                                    Absent
+                                </Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -136,6 +197,33 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF'
     },
     header: {},
+    actionsModal: {
+        minWidth: width * 0.55,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 5,
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: COLORS.borderColor,
+        gap: 8,
+
+        position: 'absolute',
+        top: 40,
+        right: 0,
+        zIndex: 1,
+
+        shadowColor: '#7F5DF0',
+        shadowOffset: {
+            width: 0,
+            height: 10
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.5,
+        elevation: 5
+    },
+    actionItem: {
+        textAlign: 'right'
+    },
     headerTitle: {
         justifyContent: 'space-between',
     },

@@ -14,7 +14,7 @@ type props = {
 }
 
 const statusMeaning = {
-    0: 'Not yet',
+    0: 'Pending',
     1: 'Attended',
     2: 'Absent'
 }
