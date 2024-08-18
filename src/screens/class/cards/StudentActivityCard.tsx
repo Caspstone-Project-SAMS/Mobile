@@ -26,10 +26,6 @@ const StudentActivityCard: React.FC<props> = ({ avatar, name, status, studentCod
 
     const onToggleSwitch = () => setIsSwitchOn(!isSwitchOn);
 
-    useEffect(() => {
-        handleUpdateStatus(studentCode, isSwitchOn);
-    }, [isSwitchOn])
-
     return (
         <View style={styles.container}>
             <View style={[GLOBAL_STYLES.horizontalCenter, { width: '70%', gap: 10 }]}>
@@ -51,7 +47,11 @@ const StudentActivityCard: React.FC<props> = ({ avatar, name, status, studentCod
                             <Switch
                                 color={isSwitchOn ? 'green' : '#FF776B'}
                                 trackColor={{ false: '#FF776B' }}
-                                value={isSwitchOn} onValueChange={onToggleSwitch}
+                                value={isSwitchOn}
+                                onValueChange={() => {
+                                    handleUpdateStatus(studentCode, !isSwitchOn);
+                                    onToggleSwitch();
+                                }}
                             />
                             <Text
                                 style={isSwitchOn ? { color: 'green' } : { color: 'red' }}

@@ -6,6 +6,9 @@ const getAttendanceByScheduleId = async (scheduleID: string) => {
   const response = await axios.get(ATTENDANCE_API, {
     params: {
       scheduleID,
+      quantity: 50,
+      startPage: 1,
+      endPage: 5,
     },
   });
   return response.data as Attendance[];

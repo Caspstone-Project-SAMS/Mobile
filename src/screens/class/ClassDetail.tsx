@@ -1,5 +1,5 @@
 import { View, StyleSheet, ScrollView, Image, Dimensions } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Modal, Text, TextInput } from 'react-native-paper'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 
@@ -14,14 +14,23 @@ import { AttendanceService } from '../../hooks/Attendance'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import CustomBtn from '../../components/global/CustomBtn'
 import { Toast } from 'react-native-toast-notifications'
+import NonData from '../../assets/imgs/nodata_black.png'
 
 const { width } = Dimensions.get('window');
+
+type DashBoard = {
+    attendance: number,
+    attended: number,
+    absent: number,
+    pending: number,
+}
 
 const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
     const { schedule: { classCode, classID, date, endTime, roomName, scheduleID, slotNumber, startTime, status, subjectCode } } = route.params
 
     const [searchVal, setSearchVal] = useState<string>('');
     const [selectedView, setSelectedView] = useState<'list' | 'pending' | 'absent'>('list');
+    const [dashBoard, setDashBoard] = useState<DashBoard>({ attendance: 0, absent: 0, attended: 0, pending: 0 });
     const [studentList, setStudentList] = useState<Attendance[]>([]);
     const [filteredList, setFilteredList] = useState<Attendance[]>([]);
 
@@ -38,24 +47,62 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
         };
     });
 
-    const handleUpdateStatus = (studentCode: string, status: boolean) => {
-        console.log("he;ppppppppp--------------", studentCode, '-', status);
-        const statusNumber = status ? (1) : (2);
-        const updatedList = filteredList.map(student => {
-            if (student.studentCode === studentCode) {
-                return { ...student, attendanceStatus: statusNumber }
-            } else {
-                return student
-            }
+    const getScheduleDetail = () => {
+        const promise = AttendanceService.getAttendanceByScheduleId(scheduleID)
+        console.log("Getting schedule id ", scheduleID);
+        promise.then(list => {
+            setDashBoard(dashboardCalculator(list));
+            setStudentList(list);
+            setFilteredList(list);
+        }).catch(err => {
+            console.log("Error when get schedule detail");
         })
-        setFilteredList(updatedList);
     }
 
+    const dashboardCalculator = (list: Attendance[]): DashBoard => {
+        const dashBoard: DashBoard = { attendance: list.length, attended: 0, absent: 0, pending: 0 }
+        list.forEach(item => {
+            switch (item.attendanceStatus) {
+                case 0:
+                    dashBoard.pending = dashBoard.pending + 1;
+                    break;
+                case 1:
+                    dashBoard.attended = dashBoard.attended + 1;
+                    break;
+                case 2:
+                    dashBoard.absent = dashBoard.absent + 1;
+                    break;
+                default:
+                    break;
+            }
+        })
+
+        return dashBoard
+    }
+
+    const handleUpdateStatus = useCallback((studentCode: string, status: boolean) => {
+        if (isOpenActions) {
+            setIsOpenActions(false);
+        }
+        console.log("he;ppppppppp--------------", studentCode, '-', status);
+        setFilteredList((prevList) => {
+            return prevList.map(student => {
+                if (student.studentCode === studentCode) {
+                    return { ...student, attendanceStatus: status ? 1 : 2 };
+                } else {
+                    return student;
+                }
+            });
+        });
+    }, [filteredList])
+
     const handleSubmitAttendance = () => {
+        setSelectedView('list');
+
         const currentTime = new Date().toISOString();
         const fmtUpdatedList = filteredList.map(item => {
             const { comments, studentID, attendanceStatus } = item;
-            if (studentID && attendanceStatus) {
+            if (studentID) {
                 return {
                     comments: comments ? comments : '',
                     studentID: studentID,
@@ -64,29 +111,40 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                     attendanceStatus: attendanceStatus === 0 ? 2 : attendanceStatus
                 }
             }
-        }).filter(item => item !== undefined);
+        });
 
+        console.log("Gonna updated this list - fmtupdatedlist", fmtUpdatedList);
         const response = AttendanceService.updateListAttendance(fmtUpdatedList);
         response.then(data => {
             setIsAttendanceMode(false);
-            setStudentList(filteredList)
+            getScheduleDetail()
             Toast.show('Update Attendance Successfully!')
         }).catch(err => {
             Toast.show('Something went wrong, please try again later');
         })
     }
 
+    const handleSearch = (value: string) => {
+        if (value.length === 0) {
+            setFilteredList(studentList)
+        } else {
+            const filtered = studentList.filter((item) =>
+                item.studentCode!.toLowerCase().includes(value.toLowerCase()) ||
+                item.studentName!.toLowerCase().includes(value.toLowerCase())
+            );
+            setFilteredList(filtered);
+        }
+    };
+
     useEffect(() => {
-        const promise = AttendanceService.getAttendanceByScheduleId(scheduleID)
-        console.log("Getting scheduleID ", scheduleID);
-        promise.then(list => {
-            console.log("Studentlist ", list);
-            setStudentList(list);
-            setFilteredList(list);
-        }).catch(err => {
-            console.log("Error when get schedule detail");
-        })
+        getScheduleDetail();
     }, [])
+
+    //Original change -> update for ui and dashboard
+    useEffect(() => {
+        setFilteredList(studentList);
+        setDashBoard(dashboardCalculator(studentList))
+    }, [studentList])
 
     useEffect(() => {
         opacity.value = isOpenActions ? 1 : 0;
@@ -104,13 +162,15 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                 }
                 break;
             case 'pending':
-                const filter = studentList.filter(student => student.attendanceStatus === 0);
-                setFilteredList(filter)
+                {
+                    const filter = studentList.filter(student => student.attendanceStatus === 0);
+                    setFilteredList(filter)
+                }
                 break;
             default:
                 break;
         }
-    }, [selectedView])
+    }, [selectedView]);
 
     useEffect(() => {
         console.log("Filter list has change ------------ ", filteredList);
@@ -135,7 +195,12 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                             </TouchableOpacity>
                             <Animated.View style={[styles.actionsModal, animatedStyle]}>
                                 <TouchableOpacity
-                                    onPress={() => setIsAttendanceMode(!isAttendanceMode)}
+                                    onPress={() => {
+                                        if (isAttendanceMode === true) {//Reset when repress on action
+                                            setFilteredList(studentList);
+                                        }
+                                        setIsAttendanceMode(!isAttendanceMode)
+                                    }}
                                 >
                                     <Text style={styles.actionItem}>Take attendance mode</Text>
                                 </TouchableOpacity>
@@ -154,12 +219,12 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                 </View>
                 <View style={styles.dashboardCardsCtn}>
                     <View style={styles.dashboardRow}>
-                        <DashboardCard label='Attendance' detail='35' theme='info' key={'1'} />
-                        <DashboardCard label='Attended' detail='26' theme='success' key={'2'} />
+                        <DashboardCard label='Attendance' detail={dashBoard.attendance} theme='info' key={'1'} />
+                        <DashboardCard label='Attended' detail={dashBoard.attended} theme='success' key={'2'} />
                     </View>
                     <View style={styles.dashboardRow}>
-                        <DashboardCard label='Exemptions' detail='2' theme='warning' key={'3'} />
-                        <DashboardCard label='Absent' detail='1' theme='danger' key={'4'} />
+                        <DashboardCard label='Pending' detail={dashBoard.pending} theme='warning' key={'3'} />
+                        <DashboardCard label='Absent' detail={dashBoard.absent} theme='danger' key={'4'} />
                     </View>
                 </View>
             </View>
@@ -178,9 +243,12 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                         style={[styles.searchBox, styles.shadow]}
                         right={<TextInput.Icon
                             icon={'magnify'}
-                        // onPress={() => { console.log("hehe") }}
+                            onPress={() => handleSearch(searchVal)}
                         />}
-                        onChangeText={val => setSearchVal(val)}
+                        onChangeText={val => {
+                            handleSearch(val);
+                            setSearchVal(val);
+                        }}
                     />
                 </View>
 
@@ -229,34 +297,48 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
 
                     <View style={styles.studentList}>
                         {
-                            filteredList.map((student, i) =>
-                                <StudentActivityCard
-                                    avatar={student.avatar}
-                                    name={student.studentName}
-                                    status={student.attendanceStatus}
-                                    studentCode={student.studentCode}
-                                    attendanceMode={isAttendanceMode}
-                                    handleUpdateStatus={handleUpdateStatus}
-                                    // absentPercentage={student.absentPercentage}
-                                    key={`student_${i}`}
-                                />
+                            filteredList.length > 0 ? (
+                                <>
+                                    {
+                                        filteredList.map((student, i) =>
+                                            <StudentActivityCard
+                                                avatar={student.avatar}
+                                                name={student.studentName}
+                                                status={student.attendanceStatus}
+                                                studentCode={student.studentCode}
+                                                attendanceMode={isAttendanceMode}
+                                                handleUpdateStatus={handleUpdateStatus}
+                                                // absentPercentage={student.absentPercentage}
+                                                key={`student_${student.studentCode}`}
+                                            />
+                                        )
+                                    }
+                                    {/* Attendance mode */}
+                                    {
+                                        isAttendanceMode &&
+                                        <View style={styles.attendanceActionCtn}>
+                                            <TouchableOpacity style={styles.attendanceBtns}>
+                                                <CustomBtn text='Cancel' key={'cancel_attend'} />
+                                            </TouchableOpacity>
+
+                                            <TouchableOpacity style={styles.attendanceBtns}
+                                                onPress={() => handleSubmitAttendance()}
+                                            >
+                                                <CustomBtn text='Submit' key={'submit_attend'} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    }
+                                </>
+                            ) : (
+                                <View style={GLOBAL_STYLES.verticalBetweenCenter}>
+                                    <Image
+                                        style={{ width: 100, height: 100 }}
+                                        source={require('../../assets/imgs/nodata_black.png')} alt='No data image' />
+                                    <Text>No Data</Text>
+                                </View>
                             )
                         }
-                        {/* Attendance mode */}
-                        {
-                            isAttendanceMode &&
-                            <View style={styles.attendanceActionCtn}>
-                                <TouchableOpacity style={styles.attendanceBtns}>
-                                    <CustomBtn text='Cancel' key={'cancel_attend'} />
-                                </TouchableOpacity>
 
-                                <TouchableOpacity style={styles.attendanceBtns}
-                                    onPress={() => handleSubmitAttendance()}
-                                >
-                                    <CustomBtn text='Submit' key={'submit_attend'} />
-                                </TouchableOpacity>
-                            </View>
-                        }
                     </View>
                 </View>
             </View>

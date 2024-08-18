@@ -23,6 +23,10 @@ export const GLOBAL_STYLES = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  verticalBetweenCenter: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   //TEXT
   titleLabel: {
     fontSize: 18,

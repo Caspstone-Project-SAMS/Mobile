@@ -4,7 +4,7 @@ import { Text } from 'react-native-paper'
 
 type props = {
     label: string,
-    detail: string,
+    detail: number,
     theme: 'info' | 'success' | 'warning' | 'danger'
 }
 
