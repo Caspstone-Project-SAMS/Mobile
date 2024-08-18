@@ -11,8 +11,9 @@ import Title from '../../components/Title'
 import { Navigation } from '../../hooks/navigation/Navigation'
 import { Attendance } from '../../models/Attendance'
 import { AttendanceService } from '../../hooks/Attendance'
-import DropDownPicker from 'react-native-dropdown-picker'
-
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import CustomBtn from '../../components/global/CustomBtn'
+import { Toast } from 'react-native-toast-notifications'
 
 const { width } = Dimensions.get('window');
 
@@ -24,13 +25,56 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
     const [studentList, setStudentList] = useState<Attendance[]>([]);
     const [filteredList, setFilteredList] = useState<Attendance[]>([]);
 
-    const [isOpenActions, setIsOpenActions] = useState<boolean>(false)
-    const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false)
+    const [isOpenActions, setIsOpenActions] = useState<boolean>(false);
+    const [isAttendanceMode, setIsAttendanceMode] = useState<boolean>(false);
+    const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
 
-    const hideModal = () => {
-        setIsOpenActions(false)
+    const opacity = useSharedValue(0);
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            opacity: withTiming(opacity.value, {
+                duration: 260,
+            }),
+        };
+    });
+
+    const handleUpdateStatus = (studentCode: string, status: boolean) => {
+        console.log("he;ppppppppp--------------", studentCode, '-', status);
+        const statusNumber = status ? (1) : (2);
+        const updatedList = filteredList.map(student => {
+            if (student.studentCode === studentCode) {
+                return { ...student, attendanceStatus: statusNumber }
+            } else {
+                return student
+            }
+        })
+        setFilteredList(updatedList);
     }
-    const containerStyle = { backgroundColor: 'white', padding: 20 };
+
+    const handleSubmitAttendance = () => {
+        const currentTime = new Date().toISOString();
+        const fmtUpdatedList = filteredList.map(item => {
+            const { comments, studentID, attendanceStatus } = item;
+            if (studentID && attendanceStatus) {
+                return {
+                    comments: comments ? comments : '',
+                    studentID: studentID,
+                    scheduleID: Number(scheduleID),
+                    attendanceTime: currentTime,
+                    attendanceStatus: attendanceStatus === 0 ? 2 : attendanceStatus
+                }
+            }
+        }).filter(item => item !== undefined);
+
+        const response = AttendanceService.updateListAttendance(fmtUpdatedList);
+        response.then(data => {
+            setIsAttendanceMode(false);
+            setStudentList(filteredList)
+            Toast.show('Update Attendance Successfully!')
+        }).catch(err => {
+            Toast.show('Something went wrong, please try again later');
+        })
+    }
 
     useEffect(() => {
         const promise = AttendanceService.getAttendanceByScheduleId(scheduleID)
@@ -43,6 +87,10 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
             console.log("Error when get schedule detail");
         })
     }, [])
+
+    useEffect(() => {
+        opacity.value = isOpenActions ? 1 : 0;
+    }, [isOpenActions]);
 
     useEffect(() => {
         switch (selectedView) {
@@ -64,6 +112,10 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
         }
     }, [selectedView])
 
+    useEffect(() => {
+        console.log("Filter list has change ------------ ", filteredList);
+    }, [filteredList])
+
     return (
         <ScrollView style={styles.container}>
             <Title navigation={navigation} title='Class Activity' />
@@ -81,10 +133,16 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                             >
                                 <Image style={styles.titleIcon} source={require('../../assets/icons/plusIconBtn.png')} />
                             </TouchableOpacity>
-                            <View style={[styles.actionsModal, { display: isOpenActions ? 'flex' : 'none' }]}>
-                                <Text style={styles.actionItem}>Take attendance mode</Text>
-                                <Text style={styles.actionItem}>Set up modules</Text>
-                            </View>
+                            <Animated.View style={[styles.actionsModal, animatedStyle]}>
+                                <TouchableOpacity
+                                    onPress={() => setIsAttendanceMode(!isAttendanceMode)}
+                                >
+                                    <Text style={styles.actionItem}>Take attendance mode</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity>
+                                    <Text style={styles.actionItem}>Set up modules</Text>
+                                </TouchableOpacity>
+                            </Animated.View>
                         </View>
                         <View style={{ position: 'relative' }}>
                             <TouchableOpacity>
@@ -177,10 +235,27 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                                     name={student.studentName}
                                     status={student.attendanceStatus}
                                     studentCode={student.studentCode}
+                                    attendanceMode={isAttendanceMode}
+                                    handleUpdateStatus={handleUpdateStatus}
                                     // absentPercentage={student.absentPercentage}
                                     key={`student_${i}`}
                                 />
                             )
+                        }
+                        {/* Attendance mode */}
+                        {
+                            isAttendanceMode &&
+                            <View style={styles.attendanceActionCtn}>
+                                <TouchableOpacity style={styles.attendanceBtns}>
+                                    <CustomBtn text='Cancel' key={'cancel_attend'} />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={styles.attendanceBtns}
+                                    onPress={() => handleSubmitAttendance()}
+                                >
+                                    <CustomBtn text='Submit' key={'submit_attend'} />
+                                </TouchableOpacity>
+                            </View>
                         }
                     </View>
                 </View>
@@ -282,6 +357,15 @@ const styles = StyleSheet.create({
     onSelectedBtn: {
         backgroundColor: COLORS.skyBlue,
         color: '#FFF'
+    },
+    attendanceActionCtn: {
+        flexDirection: 'row',
+        gap: 20,
+        width: '100%',
+        backgroundColor: 'red'
+    },
+    attendanceBtns: {
+        width: '100%'
     },
     studentList: {},
 })

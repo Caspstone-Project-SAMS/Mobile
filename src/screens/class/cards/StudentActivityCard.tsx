@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Image, StyleSheet, View } from 'react-native'
-import { Text } from 'react-native-paper'
+import { Switch, Text } from 'react-native-paper'
 import { FONT_COLORS } from '../../../assets/styles/variables'
 import { GLOBAL_STYLES } from '../../../assets/styles/styles'
 import NonAvatar from '../../../assets/imgs/student_icon.png'
@@ -10,7 +10,9 @@ type props = {
     studentCode: string,
     status: number,
     avatar?: string,
-    absentPercentage?: number
+    absentPercentage?: number,
+    attendanceMode: boolean,
+    handleUpdateStatus: any
 }
 
 const statusMeaning = {
@@ -19,7 +21,15 @@ const statusMeaning = {
     2: 'Absent'
 }
 
-const StudentActivityCard: React.FC<props> = ({ avatar, name, status, studentCode, absentPercentage }) => {
+const StudentActivityCard: React.FC<props> = ({ avatar, name, status, studentCode, absentPercentage, attendanceMode, handleUpdateStatus }) => {
+    const [isSwitchOn, setIsSwitchOn] = useState(status === 1 ? true : false);
+
+    const onToggleSwitch = () => setIsSwitchOn(!isSwitchOn);
+
+    useEffect(() => {
+        handleUpdateStatus(studentCode, isSwitchOn);
+    }, [isSwitchOn])
+
     return (
         <View style={styles.container}>
             <View style={[GLOBAL_STYLES.horizontalCenter, { width: '70%', gap: 10 }]}>
@@ -35,17 +45,36 @@ const StudentActivityCard: React.FC<props> = ({ avatar, name, status, studentCod
                 </View>
             </View>
             <View style={{ gap: 5, width: '30%' }}>
-                <Text style={[
-                    styles.activityStatus,
-                    status === 0 ? ({ color: '#FF8F00' })
-                        : status === 1 ? ({ color: '#3ABE00' }) : ({ color: '#DB1200' })
-                ]}>
-                    {/* @ts-ignore */}
-                    {statusMeaning[status] ? statusMeaning[status] : statusMeaning[2]}
-                </Text>
-                <Text style={[styles.blurTxt, { textAlign: 'right' }]}>
-                    Absent - {absentPercentage ? absentPercentage : 0}%
-                </Text>
+                {
+                    attendanceMode ? (
+                        <View style={{ alignItems: 'flex-end' }}>
+                            <Switch
+                                color={isSwitchOn ? 'green' : '#FF776B'}
+                                trackColor={{ false: '#FF776B' }}
+                                value={isSwitchOn} onValueChange={onToggleSwitch}
+                            />
+                            <Text
+                                style={isSwitchOn ? { color: 'green' } : { color: 'red' }}
+                            >
+                                {isSwitchOn ? 'Attended' : 'Absent'}
+                            </Text>
+                        </View>
+                    ) : (
+                        <>
+                            <Text style={[
+                                styles.activityStatus,
+                                status === 0 ? ({ color: '#FF8F00' })
+                                    : status === 1 ? ({ color: '#3ABE00' }) : ({ color: '#DC4437' })
+                            ]}>
+                                {/* @ts-ignore */}
+                                {statusMeaning[status] ? statusMeaning[status] : statusMeaning[2]}
+                            </Text>
+                            <Text style={[styles.blurTxt, { textAlign: 'right' }]}>
+                                Absent - {absentPercentage ? absentPercentage : 0}%
+                            </Text>
+                        </>
+                    )
+                }
             </View>
         </View>
     )
