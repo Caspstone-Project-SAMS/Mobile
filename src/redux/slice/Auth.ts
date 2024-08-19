@@ -46,7 +46,10 @@ const updateUser = createAsyncThunk(
 
 const login = createAsyncThunk(
   'auth/login',
-  async (arg: { username: string; password: string }, { rejectWithValue }) => {
+  async (
+    arg: { username: string; password: string; isRemember: boolean },
+    { rejectWithValue },
+  ) => {
     const { username, password } = arg;
     try {
       const loginPromise = AuthService.login(username, password);
@@ -92,6 +95,9 @@ const AuthSlice = createSlice({
   initialState,
   reducers: {
     logout: (state) => {
+      AsyncStorageHelpers.removeValue('userAuth');
+      AsyncStorageHelpers.removeValue('session');
+
       state.authStatus = false;
       state.loadingStatus = false;
       state.googleAuth = undefined;
@@ -109,15 +115,22 @@ const AuthSlice = createSlice({
       };
     });
     builder.addCase(login.fulfilled, (state, action) => {
-      const { payload } = action;
+      const {
+        payload,
+        meta: {
+          arg: { isRemember },
+        },
+      } = action;
+      // console.log('UserInfo here ', payload);
+      if (isRemember) {
+        const session = {
+          loginTime: new Date().getTime(),
+          expiredTime: new Date().getTime() + 604800000, //7 days
+        };
 
-      const session = {
-        loginTime: new Date().getTime(),
-        expiredTime: new Date().getTime() + 604800000, //7 days
-      };
-
-      AsyncStorageHelpers.storeObjData('userAuth', JSON.stringify(payload));
-      AsyncStorageHelpers.storeObjData('session', JSON.stringify(session));
+        AsyncStorageHelpers.storeObjData('userAuth', JSON.stringify(payload));
+        AsyncStorageHelpers.storeObjData('session', JSON.stringify(session));
+      }
 
       return {
         ...state,
