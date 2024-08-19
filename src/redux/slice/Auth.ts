@@ -4,6 +4,7 @@ import { UserInfo } from '../../models/UserInfo';
 import axios, { AxiosError } from 'axios';
 import AuthService from '../../hooks/Auth';
 import { AsyncStorageHelpers } from '../../hooks/helpers/AsyncStorage';
+import { Toast } from 'react-native-toast-notifications';
 
 interface AuthState {
   authStatus: boolean;
@@ -58,6 +59,11 @@ const login = createAsyncThunk(
       return result;
     } catch (error: any) {
       if (axios.isAxiosError(error) && error.response) {
+        Toast.show('Username or password wrongs', {
+          type: 'danger',
+          placement: 'top',
+        });
+
         console.log('hi error here ', error);
         throw new AxiosError(error.response);
       }

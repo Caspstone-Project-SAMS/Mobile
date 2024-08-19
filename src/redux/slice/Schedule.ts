@@ -139,6 +139,7 @@ const ScheduleSlice = createSlice({
       }
     });
     builder.addCase(getScheduleByDay.fulfilled, (state, { payload }) => {
+      // console.log('Change her in schedule ', payload);
       state.loading = false;
 
       state.data = [];
