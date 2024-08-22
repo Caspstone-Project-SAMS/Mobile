@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Image, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { TextInput, MD3Colors, Text as PaperTxt, Button, Checkbox } from "react-native-paper";
+import { TextInput, MD3Colors, Text as PaperTxt, Checkbox } from "react-native-paper";
 import { COLORS, FONT_COLORS } from "../../assets/styles/variables";
 import { DividerWithTxt } from "../../components/global/DividerWithTxt";
 import { GLOBAL_STYLES } from "../../assets/styles/styles";
@@ -12,8 +12,6 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../redux/Store";
 import { ParamListBase, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Toast } from "react-native-toast-notifications";
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState("");

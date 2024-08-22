@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { View, StyleSheet, Image, TouchableOpacity, Dimensions, Pressable, ScrollView } from 'react-native'
 import { Text } from 'react-native-paper'
 import Swiper from 'react-native-swiper'
@@ -56,7 +56,7 @@ const Home = () => {
   const [currentSemester, setCurrentSemester] = useState<number>(5);
   const [dashBoardInfo, setDashboardInfo] = useState<Dashboard | undefined>(undefined);
 
-  const weeks = React.useMemo(() => {
+  const weeks = useMemo(() => {
     const start = moment().add(0, 'weeks').startOf('week');
 
     return [-1, 0, 1].map(adj => {
@@ -329,7 +329,7 @@ const Home = () => {
                       </View>
                     )
                   }
-                }) : (<Text style={styles.detail}>Done</Text>)
+                }) : (<Text style={[styles.detail, { width: '100%' }]}>Done</Text>)
               }
             </View>
           </View>
@@ -348,12 +348,17 @@ const Home = () => {
               data.map((item, i) => {
                 const timeSlot = Slots[item.slotNumber - 1].timeStart + ' - ' + Slots[item.slotNumber - 1].timeEnd
                 return (
-                  <ActivityCard
-                    room={item.roomName}
-                    status={item.status ?? 'Past'}
-                    subjectCode={item.subjectCode}
-                    time={timeSlot}
-                    key={`schedule_${i}`} />
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('ClassDetail', { schedule: item })}
+                    key={`schedule_${i}`}
+                  >
+                    <ActivityCard
+                      room={item.roomName}
+                      status={item.status ?? 'Past'}
+                      subjectCode={item.subjectCode}
+                      time={timeSlot}
+                    />
+                  </TouchableOpacity>
                 )
               })
             }

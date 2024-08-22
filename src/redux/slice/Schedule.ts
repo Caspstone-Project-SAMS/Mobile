@@ -28,6 +28,11 @@ const initialState: Schedule = {
   error: '',
 };
 
+const formatDate = (date: Date) => {
+  const fmtData = moment(date).format('YYYY-MM-DD');
+  return fmtData;
+};
+
 const serializeAxiosErr = (error: AxiosError) => {
   return {
     message: error.message,
@@ -92,6 +97,42 @@ const getScheduleByDay = createAsyncThunk(
   },
 );
 
+const getScheduleByWeek = createAsyncThunk(
+  'calendar/scheduleByWeek',
+  async (
+    arg: { lecturerID: string; semesterID: number; week: Date[] },
+    { rejectWithValue },
+  ) => {
+    try {
+      const { lecturerID, semesterID, week } = arg;
+      let startDate;
+      let endDate;
+      if (week.length === 7) {
+        startDate = formatDate(week[0]);
+        endDate = formatDate(week[6]);
+        const schedulePromise = await ScheduleService.getScheduleByWeek(
+          lecturerID,
+          semesterID,
+          50,
+          startDate,
+          endDate,
+        );
+        // console.log('Schedule promise ', schedulePromise);
+        return schedulePromise;
+      }
+      return rejectWithValue('Currently support get data in week view');
+    } catch (error) {
+      if (
+        axios.isAxiosError(error) &&
+        error.response?.data === 'Lecturer not have any Schedule'
+      ) {
+        console.log('No data');
+      }
+      console.log('Error when get schedule', error.response?.data);
+    }
+  },
+);
+
 const ScheduleSlice = createSlice({
   name: 'auth',
   initialState,
@@ -149,9 +190,32 @@ const ScheduleSlice = createSlice({
         state.data.push(formattedValue);
       });
     });
+
+    builder.addCase(getScheduleByWeek.fulfilled, (state, { payload }) => {
+      // console.log('Change her in schedule ', payload);
+      state.loading = false;
+
+      state.data = [];
+      payload.forEach((newItem: ScheduleResponse) => {
+        //Calculate schedule status
+        const formattedValue = formatScheduleRepsonse(newItem);
+        state.data.push(formattedValue);
+      });
+    });
+    builder.addCase(getScheduleByWeek.rejected, (state, action) => {
+      const { payload } = action;
+      const errorResponse = JSON.parse(String(payload));
+      const errMsg = errorResponse.response.data;
+
+      //   console.log('Got error here ', errorResponse);
+      state.loading = false;
+      if (errMsg) {
+        state.error = errMsg;
+      }
+    });
   },
 });
 
-export { getTodaySchedule, getScheduleByDay };
+export { getTodaySchedule, getScheduleByDay, getScheduleByWeek };
 
 export default ScheduleSlice.reducer;
