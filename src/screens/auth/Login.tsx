@@ -84,11 +84,12 @@ const Login: React.FC = () => {
                         : styles.defaultOutline}
                     onFocus={() => setFocusInput('email')}
                     onBlur={() => setFocusInput(undefined)}
-                    style={[styles.input, { marginTop: 10 }]}
+                    style={[styles.input, { marginTop: 10, backgroundColor: "#FFF" }]}
                     theme={{
                         colors: {
-                            primary: COLORS.skyBase, text: FONT_COLORS.greyFontColor
-                        }
+                            primary: COLORS.skyBlue,
+                            text: FONT_COLORS.greyFontColor,
+                        },
                     }}
                     onChangeText={val => setEmail(val)}
                 />
@@ -97,7 +98,7 @@ const Login: React.FC = () => {
                     label='Password'
                     placeholder="Password"
                     secureTextEntry={secureTextEntry}
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: "#FFF" }]}
                     outlineStyle={
                         focusInput === 'password'
                             ? styles.outlineInputFocus
@@ -107,7 +108,8 @@ const Login: React.FC = () => {
                     onBlur={() => setFocusInput(undefined)}
                     theme={{
                         colors: {
-                            primary: COLORS.skyBase, text: FONT_COLORS.greyFontColor
+                            primary: COLORS.skyBlue,
+                            text: FONT_COLORS.greyFontColor
                         }
                     }}
                     onChangeText={val => setPassword(val)}
@@ -134,7 +136,7 @@ const Login: React.FC = () => {
                         style={{
                             marginVertical: 20,
                         }}
-                        onPress={() => { console.log("user info ", userInfo); }}
+                        onPress={() => { navigation.navigate('FORGOT_PASSWORD') }}
                     >
                         <PaperTxt style={styles.forgotPassTxt}>Forgot Password?</PaperTxt>
                     </TouchableOpacity>

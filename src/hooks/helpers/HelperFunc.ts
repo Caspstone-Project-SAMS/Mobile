@@ -22,7 +22,14 @@ const removeDuplicates = (arr: string[]): string[] => {
   return Array.from(uniqueSet);
 };
 
+const emailChecker = (email: string): boolean => {
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+  return emailRegex.test(email);
+};
+
 export const HelperService = {
   getWeekFromDate,
   removeDuplicates,
+  emailChecker,
 };

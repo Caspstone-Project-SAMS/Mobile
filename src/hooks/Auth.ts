@@ -25,9 +25,19 @@ const getGGInfo = async (access_token: string): Promise<GGUserInfo> => {
   return response.data as GGUserInfo;
 };
 
+const forgotPassword = async (email: string) => {
+  try {
+    const response = await axios.get(USER_AUTH_API, { params: email });
+    return response.data;
+  } catch (error) {
+    console.log('Error when forgot password');
+  }
+};
+
 const AuthService = {
   login,
   getGGInfo,
+  forgotPassword,
 };
 
 export default AuthService;
