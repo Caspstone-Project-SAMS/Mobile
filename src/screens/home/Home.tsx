@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View, StyleSheet, Image, TouchableOpacity, Dimensions, Pressable, ScrollView } from 'react-native'
 import { Text } from 'react-native-paper'
 import Swiper from 'react-native-swiper'
 import moment from 'moment'
-import { ParamListBase, useNavigation } from '@react-navigation/native'
+import { ParamListBase, useFocusEffect, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import useDispatch from '../../redux/UseDispatch'
 import { useToast } from 'react-native-toast-notifications'
@@ -12,7 +12,6 @@ import { RootState } from '../../redux/Store'
 
 import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import { getScheduleByDay, getTodaySchedule } from '../../redux/slice/Schedule'
-import { Slots } from '../../models/schedule/Slot'
 import { DayCard } from './cards/DayCard'
 import SmallCard from './cards/SmallCard'
 import ActivityCard from './cards/ActivityCard'
@@ -20,7 +19,6 @@ import ActivityCard from './cards/ActivityCard'
 import { PermissionsAndroid } from 'react-native';
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
 import { getAllSemester } from '../../redux/slice/Semester'
-import { AsyncStorageHelpers } from '../../hooks/helpers/AsyncStorage'
 import { ScheduleResponse } from '../../models/schedule/ScheduleResponse'
 import { validateStatusSchedule } from '../../hooks/helpers/ScheduleHelper'
 import { HelperService } from '../../hooks/helpers/HelperFunc'
@@ -346,7 +344,8 @@ const Home = () => {
           <View style={{ gap: 10 }}>
             {
               data.map((item, i) => {
-                const timeSlot = Slots[item.slotNumber - 1].timeStart + ' - ' + Slots[item.slotNumber - 1].timeEnd
+                const startTime = item.startTime.substring(0, 5);
+                const endTime = item.endTime.substring(0, 5);
                 return (
                   <TouchableOpacity
                     onPress={() => navigation.navigate('ClassDetail', { schedule: item })}
@@ -356,7 +355,8 @@ const Home = () => {
                       room={item.roomName}
                       status={item.status ?? 'Past'}
                       subjectCode={item.subjectCode}
-                      time={timeSlot}
+                      startTime={startTime}
+                      endTime={endTime}
                     />
                   </TouchableOpacity>
                 )
@@ -365,7 +365,6 @@ const Home = () => {
           </View>
         </View>
       </View>
-
     </ScrollView>
   )
 }

@@ -14,7 +14,7 @@ import { AttendanceService } from '../../hooks/Attendance'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import CustomBtn from '../../components/global/CustomBtn'
 import { Toast } from 'react-native-toast-notifications'
-import NonData from '../../assets/imgs/nodata_black.png'
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const { width } = Dimensions.get('window');
 
@@ -317,14 +317,31 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                                     {
                                         isAttendanceMode &&
                                         <View style={styles.attendanceActionCtn}>
-                                            <TouchableOpacity style={styles.attendanceBtns}>
-                                                <CustomBtn text='Cancel' key={'cancel_attend'} />
+                                            <TouchableOpacity style={styles.attendanceBtns}
+                                                onPress={() => {
+                                                    setFilteredList(studentList);
+                                                    setIsAttendanceMode(!isAttendanceMode)
+                                                }}
+                                            >
+                                                <CustomBtn
+                                                    text='Cancel'
+                                                    key={'cancel_attend'}
+                                                    customStyle={{ width: '80%', backgroundColor: '#FF776B' }}
+                                                    colorTxt={{ color: '#FFF', marginLeft: 2, fontSize: 16 }}
+                                                    icon={<Ionicons name='remove-circle-outline' size={24} color={'#FFF'} />}
+                                                />
                                             </TouchableOpacity>
 
                                             <TouchableOpacity style={styles.attendanceBtns}
                                                 onPress={() => handleSubmitAttendance()}
                                             >
-                                                <CustomBtn text='Submit' key={'submit_attend'} />
+                                                <CustomBtn
+                                                    text='Submit'
+                                                    key={'submit_attend'}
+                                                    customStyle={{ width: '80%', backgroundColor: COLORS.skyBlue }}
+                                                    colorTxt={{ color: '#FFF', marginLeft: 2, fontSize: 16 }}
+                                                    icon={<Ionicons name='checkmark-circle-outline' size={24} color={'#FFF'} />}
+                                                />
                                             </TouchableOpacity>
                                         </View>
                                     }
@@ -441,13 +458,25 @@ const styles = StyleSheet.create({
         color: '#FFF'
     },
     attendanceActionCtn: {
-        flexDirection: 'row',
-        gap: 20,
         width: '100%',
-        backgroundColor: 'red'
+        flexDirection: 'row',
+        justifyContent: 'space-between'
+    },
+    button: {
+
+    },
+    cancelBtn: {
+        backgroundColor: '#FF776B',
+        flex: 1,
+        color: '#000',
+    },
+    submitBtn: {
+        backgroundColor: '#C1F2B0',
+        flex: 1,
+        color: '#000'
     },
     attendanceBtns: {
-        width: '100%'
+        // width: '100%'
     },
     studentList: {},
 })

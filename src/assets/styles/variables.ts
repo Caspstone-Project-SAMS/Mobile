@@ -31,6 +31,11 @@ export const COLORS = {
 
   borderColor: '#B8B8B8',
   dividerColor: '#9E9E9E',
+
+  mainBlue: '#0087FD',
+  past: '#94A3B8',
+  active: '#3ABE00',
+  upcoming: '#FBBF24',
 };
 
 export const FONTS = {

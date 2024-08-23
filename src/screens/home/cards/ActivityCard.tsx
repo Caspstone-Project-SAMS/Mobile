@@ -6,11 +6,12 @@ import { FONT_COLORS } from '../../../assets/styles/variables'
 type props = {
     subjectCode: string,
     room: string,
-    time: string,
+    startTime: string,
+    endTime: string,
     status: 'Past' | 'Current' | 'Upcoming'
 }
 
-const ActivityCard: React.FC<props> = ({ room, status, subjectCode, time }) => {
+const ActivityCard: React.FC<props> = ({ room, status, subjectCode, endTime, startTime }) => {
     return (
         <View style={styles.container}>
             <View style={styles.left}>
@@ -23,7 +24,7 @@ const ActivityCard: React.FC<props> = ({ room, status, subjectCode, time }) => {
                 </View>
             </View>
             <View style={styles.right}>
-                <Text style={styles.mainTxt}>{time}</Text>
+                <Text style={styles.mainTxt}>{startTime} - {endTime}</Text>
                 <Text style={styles.subTxt}>{status}</Text>
             </View>
         </View>

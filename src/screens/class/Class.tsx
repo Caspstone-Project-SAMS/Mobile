@@ -43,7 +43,8 @@ const Class = ({ navigation }) => {
                 <View style={{ gap: 10 }}>
                     {
                         todaySchedules.map((item, i) => {
-                            const timeSlot = Slots[item.slotNumber - 1].timeStart + ' - ' + Slots[item.slotNumber - 1].timeEnd
+                            const startTime = item.startTime.substring(0, 5);
+                            const endTime = item.endTime.substring(0, 5);
                             return (
                                 <TouchableOpacity
                                     onPress={() => {
@@ -55,7 +56,8 @@ const Class = ({ navigation }) => {
                                         room={item.roomName}
                                         status={item.status ?? 'Past'}
                                         subjectCode={item.subjectCode}
-                                        time={timeSlot}
+                                        startTime={startTime}
+                                        endTime={endTime}
                                     />
                                 </TouchableOpacity>
                             )
