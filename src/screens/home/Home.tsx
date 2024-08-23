@@ -37,6 +37,10 @@ type Dashboard = {
   todayClass: string,
   subjectPrepare: string[]
 }
+type SelectedInfo = {
+  currentDate: Date,
+  selectedDate: string
+}
 
 const Home = () => {
   const { data, todaySchedules, error } = useSelector((state: RootState) => state.schedule)
@@ -53,6 +57,8 @@ const Home = () => {
   const [currentDay, setCurrentDay] = useState(new Date());
   const [currentSemester, setCurrentSemester] = useState<number>(5);
   const [dashBoardInfo, setDashboardInfo] = useState<Dashboard | undefined>(undefined);
+  const [selectedInfo, setSelectedInfo] = useState<SelectedInfo>({ currentDate: new Date(), selectedDate: 'Today' });
+  const [isFocus, setIsFocus] = useState<boolean>(false);
 
   const weeks = useMemo(() => {
     const start = moment().add(0, 'weeks').startOf('week');
@@ -174,6 +180,18 @@ const Home = () => {
     if (semesters.length === 0) {
       dispatch(getAllSemester());
     }
+
+    const calculateDashboard = setInterval(() => {
+      if (todaySchedules.length > 0) {
+        lectureDashboardCalculator();
+      } else {
+        clearInterval(calculateDashboard);
+      }
+    }, 60000)
+
+    return () => {
+      clearInterval(calculateDashboard);
+    }
   }, [])
 
   useEffect(() => {
@@ -196,17 +214,37 @@ const Home = () => {
   }, [semesters])
 
   useEffect(() => {
+    //Fetch schedule by day
     const daySelected = moment(currentDay).format('YYYY-MM-DD');
     const lecturerId = userInfo?.result?.id;
-    console.log("Current Day selected----------------- ", daySelected);
+    console.log("Current Day selected----------------- ", currentDay);
     if (lecturerId && semesters && currentSemester) {
       dispatch(getScheduleByDay({ lecturerId, semesterId: currentSemester, date: daySelected }))
+    }
+    //Display date info
+    if (currentDay.getDate() === selectedInfo.currentDate.getDate()) {
+      setSelectedInfo(prev => ({ ...prev, selectedDate: 'Today' }))
+    } else {
+      const fmtDate = moment(currentDay).format('DD-MM')
+      setSelectedInfo(prev => ({ ...prev, selectedDate: fmtDate }))
     }
   }, [currentDay])
 
   useEffect(() => {
     lectureDashboardCalculator();
-  }, [todaySchedules]);
+  }, [todaySchedules, data]);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Code to run when the screen is focused
+      setCurrentDay(new Date())
+
+      return () => {
+        // Code to run when the screen is unfocused
+        console.log('Screen is unfocused');
+      };
+    }, [])
+  );
 
   return (
     <ScrollView style={styles.container}>
@@ -292,6 +330,8 @@ const Home = () => {
               detail={dashBoardInfo?.upcomingTxt ? (dashBoardInfo.curUpClass.classCode) : ('Done')}
               subDetail='View Detail'
               key={'dashboardCard1'}
+              isUpcoming={true}
+              upComingSchedule={dashBoardInfo?.curUpClass}
             />
             <SmallCard
               titleIcon={require('../../assets/icons/classIcon.png')}
@@ -335,15 +375,17 @@ const Home = () => {
 
         <View style={styles.classActivities}>
           <View style={styles.activitiesHeader}>
-            <Text style={GLOBAL_STYLES.titleLabel}>Today Activities | {data.length}</Text>
-            <TouchableOpacity>
+            <Text style={GLOBAL_STYLES.titleLabel}>{selectedInfo.selectedDate} Activities | {data.length}</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Schedule')}
+            >
               <Text style={{ color: FONT_COLORS.blueFontColor }}>View All</Text>
             </TouchableOpacity>
           </View>
 
           <View style={{ gap: 10 }}>
             {
-              data.map((item, i) => {
+              data.length > 0 ? data.map((item, i) => {
                 const startTime = item.startTime.substring(0, 5);
                 const endTime = item.endTime.substring(0, 5);
                 return (
@@ -360,7 +402,14 @@ const Home = () => {
                     />
                   </TouchableOpacity>
                 )
-              })
+              }) : (
+                <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                  <Image
+                    style={{ width: 100, height: 100 }}
+                    source={require('../../assets/imgs/nodata_black.png')} alt='No data image' />
+                  <Text>No Schedule Found</Text>
+                </View>
+              )
             }
           </View>
         </View>

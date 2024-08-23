@@ -190,6 +190,11 @@ const ScheduleSlice = createSlice({
         state.data.push(formattedValue);
       });
     });
+    builder.addCase(getScheduleByDay.rejected, (state, { payload }) => {
+      // console.log('Change her in schedule ', payload);
+      state.loading = false;
+      state.data = [];
+    });
 
     builder.addCase(getScheduleByWeek.fulfilled, (state, { payload }) => {
       // console.log('Change her in schedule ', payload);
