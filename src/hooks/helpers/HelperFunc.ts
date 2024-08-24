@@ -28,8 +28,11 @@ const emailChecker = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+const randomDelay = () => Math.floor(Math.random() * 550) + 200;
+
 export const HelperService = {
   getWeekFromDate,
   removeDuplicates,
   emailChecker,
+  randomDelay,
 };

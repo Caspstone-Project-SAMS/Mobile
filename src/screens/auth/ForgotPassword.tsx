@@ -1,7 +1,7 @@
-import { Dimensions, Image, Modal, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { Dimensions, Image, StyleSheet, TouchableOpacity, View } from 'react-native'
 import React, { useState } from 'react'
 import Title from '../../components/Title'
-import { Button, HelperText, Text, TextInput } from 'react-native-paper'
+import { ActivityIndicator, Button, HelperText, Modal, Portal, Text, TextInput } from 'react-native-paper'
 import { COLORS, FONT_COLORS } from '../../assets/styles/variables';
 import { ScrollView } from 'react-native-gesture-handler';
 import CustomBtn from '../../components/global/CustomBtn';
@@ -13,20 +13,28 @@ const { width } = Dimensions.get('window');
 
 const ForgotPassword = ({ navigation }) => {
     const [email, setEmail] = useState<string>('')
-    const [visible, setVisible] = React.useState(false);
+    const [visible, setVisible] = useState(false);
+    const [isSucceed, setIsSucceed] = useState<boolean>(false)
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const showModal = () => setVisible(true);
     const hideModal = () => setVisible(false);
 
     const handleSubmit = () => {
         if (HelperService.emailChecker(email)) {
-            const promise = AuthService.forgotPassword(email);
-            promise.then(data => {
-                showModal();
-                console.log("Succeed - data ", data);
-            }).catch(err => {
-                console.log("Err here", err);
-            })
+            const delayTime = HelperService.randomDelay()
+            setIsLoading(true)
+            showModal();
+            setTimeout(() => {
+                const promise = AuthService.forgotPassword(email);
+                promise.then(data => {
+                    setIsSucceed(true)
+                    setIsLoading(false);
+                }).catch(err => {
+                    setIsSucceed(false)
+                    setIsLoading(false);
+                })
+            }, delayTime)
         } else {
             Toast.show('Unvalid email, please check again before verify', { type: 'warning', placement: 'top' })
         }
@@ -38,12 +46,20 @@ const ForgotPassword = ({ navigation }) => {
             return false
         }
     };
-    const containerStyle = { backgroundColor: 'white', padding: 20 };
+
+    const resetState = () => {
+        setVisible(false);
+        setIsSucceed(false);
+        setIsLoading(false);
+    }
+
+    const containerStyle = {
+        backgroundColor: 'white', padding: 20, marginHorizontal: 20
+    };
     return (
         <ScrollView style={styles.container}>
             <Title navigation={navigation} title='Forgot Password' />
             <View style={{ alignItems: 'center' }}>
-                {/* <Text style={styles.title}>Forgot Password</Text> */}
                 <Text style={styles.subTxt}>Enter your email to reset password</Text>
                 <View style={{ width: '100%', marginTop: 10, alignItems: 'center' }}>
                     <Image
@@ -51,7 +67,8 @@ const ForgotPassword = ({ navigation }) => {
                             height: width - 40,
                             width: width - 40,
                             borderWidth: 1,
-                            borderColor: COLORS.borderColor
+                            borderColor: COLORS.borderColor,
+                            borderRadius: 4
                         }}
                         source={require('../../assets/imgs/Forgot_password.png')}
                         alt='Forgot password image'
@@ -63,11 +80,6 @@ const ForgotPassword = ({ navigation }) => {
                     mode="outlined"
                     label='Email'
                     placeholder="Email"
-                    // outlineStyle={focusInput === 'email'
-                    //     ? styles.outlineInputFocus
-                    //     : styles.defaultOutline}
-                    // onFocus={() => setFocusInput('email')}
-                    // onBlur={() => setFocusInput(undefined)}
                     style={[styles.input, { marginTop: 10, backgroundColor: "#FFF" }]}
                     theme={{
                         colors: {
@@ -86,16 +98,81 @@ const ForgotPassword = ({ navigation }) => {
                     <CustomBtn text='Verify' />
                 </TouchableOpacity>
             </View>
-            {/* <Modal
-                visible={true}
-                onDismiss={hideModal}
-                contentContainerStyle={containerStyle}
-                style={{ flex: 1, backgroundColor: 'blue', opacity: 0.5 }}
-            >
-                <View style={styles.modal}>
-                    <Text>ahasss</Text>
-                </View>
-            </Modal> */}
+            <Portal>
+                <Modal visible={visible} dismissable={false} contentContainerStyle={containerStyle}>
+                    <View style={styles.modal}>
+                        {
+                            isLoading ? (
+                                <ActivityIndicator animating={true} color={COLORS.skyBlue} />
+                            ) : (
+                                <>
+                                    <Image source={
+                                        isSucceed
+                                            ? require('../../assets/imgs/check_email.jpg')
+                                            : require('../../assets/imgs/email_notfound.jpg')
+                                    }
+                                        resizeMode='contain'
+                                        alt='result image'
+                                        style={styles.resultImage}
+                                    />
+                                    {
+                                        isSucceed ? (
+                                            <View>
+                                                <Text style={styles.modalTxt}>
+                                                    We've sent an email to your registered email address with a link to reset your password
+                                                </Text>
+                                                <Text style={styles.modalSubTxt}>
+                                                    # If you don't see the email, please check your spam or junk folder
+                                                </Text>
+                                            </View>
+                                        ) : (
+                                            <View>
+                                                <Text style={[styles.modalTxt, { color: COLORS.yellowBase }]}>
+                                                    OOPS, look like this email does not exist, please check your email and try again!
+                                                </Text>
+                                            </View>
+                                        )
+                                    }
+                                    <View
+                                        style={{ width: '100%', marginTop: 20 }}
+                                    >
+                                        {
+                                            isSucceed ? (
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        resetState();
+                                                        navigation.navigate('LOGIN');
+                                                    }}
+                                                >
+                                                    <CustomBtn
+                                                        text='Back to Login'
+                                                        customStyle={{
+                                                            backgroundColor: COLORS.skyBlue
+                                                        }}
+                                                    />
+                                                </TouchableOpacity>
+                                            ) : (
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        resetState();
+                                                    }}
+                                                >
+                                                    <CustomBtn
+                                                        text='Try again'
+                                                        customStyle={{
+                                                            backgroundColor: COLORS.skyBlue
+                                                        }}
+                                                    />
+                                                </TouchableOpacity>
+                                            )
+                                        }
+                                    </View>
+                                </>
+                            )
+                        }
+                    </View>
+                </Modal>
+            </Portal>
         </ScrollView>
     )
 }
@@ -130,8 +207,21 @@ const styles = StyleSheet.create({
         borderRadius: 10
     },
     modal: {
-        backgroundColor: 'red',
-        padding: 20,
-        width: '40%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    resultImage: {
+        width: 250,
+        height: 250,
+        borderRadius: 4
+    },
+    modalTxt: {
+        fontSize: 16,
+        textAlign: 'center'
+    },
+    modalSubTxt: {
+        marginTop: 4,
+        fontSize: 14,
+        color: FONT_COLORS.blurFontColor
     }
 })

@@ -26,12 +26,16 @@ const getGGInfo = async (access_token: string): Promise<GGUserInfo> => {
 };
 
 const forgotPassword = async (email: string) => {
-  try {
-    const response = await axios.get(USER_AUTH_API, { params: email });
-    return response.data;
-  } catch (error) {
-    console.log('Error when forgot password');
-  }
+  const response = await axios.post(
+    USER_AUTH_API + '/forget-password',
+    undefined,
+    {
+      params: {
+        email,
+      },
+    },
+  );
+  return response.data;
 };
 
 const AuthService = {
