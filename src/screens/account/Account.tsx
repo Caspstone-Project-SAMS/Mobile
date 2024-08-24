@@ -69,7 +69,7 @@ const Account = () => {
                 <Divider style={styles.divider} />
 
                 <TouchableOpacity>
-                    <ActionCard icon={<Octicons name='unlock' size={20} color={'black'} />} text='Forgot Password' key={'forgot_password'} />
+                    <ActionCard icon={<Octicons name='unlock' size={20} color={'black'} />} text='Change Password' key={'change_password'} />
                 </TouchableOpacity>
                 <Divider style={styles.divider} />
 

@@ -127,23 +127,31 @@ const AuthSlice = createSlice({
           arg: { isRemember },
         },
       } = action;
+      const userRole = payload?.result?.role.name;
       // console.log('UserInfo here ', payload);
-      if (isRemember) {
-        const session = {
-          loginTime: new Date().getTime(),
-          expiredTime: new Date().getTime() + 604800000, //7 days
+      if (userRole && userRole === 'Lecturer') {
+        if (isRemember) {
+          const session = {
+            loginTime: new Date().getTime(),
+            expiredTime: new Date().getTime() + 604800000, //7 days
+          };
+
+          AsyncStorageHelpers.storeObjData('userAuth', JSON.stringify(payload));
+          AsyncStorageHelpers.storeObjData('session', JSON.stringify(session));
+        }
+
+        return {
+          ...state,
+          authStatus: true,
+          loadingStatus: false,
+          userDetail: payload,
         };
-
-        AsyncStorageHelpers.storeObjData('userAuth', JSON.stringify(payload));
-        AsyncStorageHelpers.storeObjData('session', JSON.stringify(session));
+      } else {
+        Toast.show('Account not supportted, please login on web application.', {
+          type: 'warning',
+          placement: 'top',
+        });
       }
-
-      return {
-        ...state,
-        authStatus: true,
-        loadingStatus: false,
-        userDetail: payload,
-      };
     });
     builder.addCase(login.rejected, (state) => {
       // showToast('Invalid credentials', 'danger');
