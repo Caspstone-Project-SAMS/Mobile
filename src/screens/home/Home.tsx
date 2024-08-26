@@ -155,7 +155,7 @@ const Home = () => {
         }
       }
       // console.log("cateried ", todaySchedules);
-      console.log("dashboardInfo ", dashboardInfoVal);
+      // console.log("dashboardInfo ", dashboardInfoVal);
     } catch (error) {
       console.log('error when calculating dashboard');
     }
@@ -177,27 +177,29 @@ const Home = () => {
   }
 
   useEffect(() => {
-    if (semesters.length === 0) {
+    if (semesters && semesters.length === 0) {
       dispatch(getAllSemester());
     }
 
-    const calculateDashboard = setInterval(() => {
-      if (todaySchedules.length > 0) {
-        lectureDashboardCalculator();
-      } else {
+    if (todaySchedules && todaySchedules.length > 0) {
+      const calculateDashboard = setInterval(() => {
+        if (todaySchedules.length > 0) {
+          lectureDashboardCalculator();
+        } else {
+          clearInterval(calculateDashboard);
+        }
+      }, 60000)
+
+      return () => {
         clearInterval(calculateDashboard);
       }
-    }, 60000)
-
-    return () => {
-      clearInterval(calculateDashboard);
     }
   }, [])
 
   useEffect(() => {
     const lecturerId = userInfo?.result?.id
     let semesterId = 5
-    if (semesters.length !== 0) {
+    if (semesters && semesters.length !== 0) {
       semesters.forEach(item => {
         if (item.semesterStatus === 2) {
           setCurrentSemester(item.semesterID);

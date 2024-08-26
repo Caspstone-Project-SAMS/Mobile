@@ -34,7 +34,7 @@ const ActionCard: React.FC<CardProps> = ({ icon, text }) => {
     )
 }
 
-const Account = () => {
+const Account = ({ navigation }) => {
     const userDetail = useSelector((state: RootState) => state.auth.userDetail?.result);
     const dispatch = useDispatch();
 
@@ -68,12 +68,16 @@ const Account = () => {
                 </TouchableOpacity>
                 <Divider style={styles.divider} />
 
-                <TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('ChangePassword')}
+                >
                     <ActionCard icon={<Octicons name='unlock' size={20} color={'black'} />} text='Change Password' key={'change_password'} />
                 </TouchableOpacity>
                 <Divider style={styles.divider} />
 
-                <TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('PrivatePolicy')}
+                >
                     <ActionCard icon={<Ionicons name='document-text-outline' size={20} color={'black'} />} text='Privacy Policy' key={'policy'} />
                 </TouchableOpacity>
                 <Divider style={styles.divider} />

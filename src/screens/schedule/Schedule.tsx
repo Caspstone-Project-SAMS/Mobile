@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react'
 import { Agenda } from 'react-native-calendars';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import AntDesign from 'react-native-vector-icons/AntDesign'
-import Ionicons from 'react-native-vector-icons/Ionicons'
 import useDispatch from '../../redux/UseDispatch';
 import { getScheduleByWeek } from '../../redux/slice/Schedule';
 import { useSelector } from 'react-redux';
@@ -112,7 +111,14 @@ const Schedule = ({ navigation }) => {
     const renderItem = (item) => {
         const startTime = item.startTime.substring(0, 5);
         const endTime = item.endTime.substring(0, 5);
-        const theme = statusTheme[item.status] ? statusTheme[item.status] : statusTheme['Past'];
+        let theme = statusTheme['Past'];
+        // const theme = statusTheme[item.status] ? statusTheme[item.status] : statusTheme['Past'];
+        if (item.status === 'Upcoming') {
+            theme = statusTheme['Upcoming'];
+        }
+        if (item.status === 'Current') {
+            theme = statusTheme['Current'];
+        }
 
         return (
             <TouchableOpacity
@@ -185,6 +191,10 @@ const Schedule = ({ navigation }) => {
         }
     }, [selected])
 
+    useEffect(() => {
+        console.log("This is event in for schedule ", events);
+    }, [events])
+
     return (
         <View style={{ flex: 1 }}>
             <CustomHeader
@@ -198,7 +208,6 @@ const Schedule = ({ navigation }) => {
                 selected={selected}
                 onDayPress={(date) => setSelected(date.dateString)}
                 items={events}
-                style={{}}
                 renderItem={renderItem}
                 renderEmptyDate={() => (
                     <View style={{ flex: 1, height: 15, paddingVertical: 10 }}>

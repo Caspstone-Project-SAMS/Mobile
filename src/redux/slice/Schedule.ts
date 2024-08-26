@@ -127,8 +127,9 @@ const getScheduleByWeek = createAsyncThunk(
         error.response?.data === 'Lecturer not have any Schedule'
       ) {
         console.log('No data');
+      } else{
+        console.log('Error when get schedule', error.response?.data);
       }
-      console.log('Error when get schedule', error.response?.data);
     }
   },
 );

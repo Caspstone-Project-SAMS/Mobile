@@ -4,6 +4,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Home from '../../screens/home/Home';
 import BottomTabs from './BottomTabs';
 import ClassDetail from '../../screens/class/ClassDetail';
+import ChangePassword from '../../screens/auth/ChangePassword';
+import PrivatePolicy from '../../screens/account/PrivatePolicy';
 
 
 
@@ -18,6 +20,8 @@ const AuthStack = () => {
         >
             <Stack.Screen name="BottomRoot" component={BottomTabs} />
             <Stack.Screen name="ClassDetail" component={ClassDetail} />
+            <Stack.Screen name="ChangePassword" component={ChangePassword} />
+            <Stack.Screen name="PrivatePolicy" component={PrivatePolicy} />
             <Stack.Screen name="Home" component={Home} />
         </Stack.Navigator>
     )

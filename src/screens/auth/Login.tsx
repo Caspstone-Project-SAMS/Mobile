@@ -70,7 +70,7 @@ const Login: React.FC = () => {
                 />
                 <Text style={styles.title}>
                     Welcome back 👋 {'\n'}
-                    to <Text style={styles.specialTxt}>SAMS</Text>
+                    to <Text style={styles.specialTxt} onPress={() => console.log("Onclick sams")}>SAMS</Text>
                 </Text>
                 <Text style={styles.blurTxt}>Hello there, login to continue</Text>
             </View>
