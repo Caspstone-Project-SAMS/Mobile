@@ -11,8 +11,8 @@ const Navigator = () => {
 
   return (
     <NavigationContainer independent={true}>
-      {/* {userRole === 'Lecturer' ? <AuthStack /> : <UnAuthStack />} */}
-      <AuthStack />
+      {userRole === 'Lecturer' ? <AuthStack /> : <UnAuthStack />}
+      {/* <AuthStack /> */}
     </NavigationContainer>
   )
 }

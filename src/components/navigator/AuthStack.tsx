@@ -6,6 +6,7 @@ import BottomTabs from './BottomTabs';
 import ClassDetail from '../../screens/class/ClassDetail';
 import ChangePassword from '../../screens/auth/ChangePassword';
 import PrivatePolicy from '../../screens/account/PrivatePolicy';
+import AccountProfile from '../../screens/account/AccountProfile';
 
 
 
@@ -22,6 +23,7 @@ const AuthStack = () => {
             <Stack.Screen name="ClassDetail" component={ClassDetail} />
             <Stack.Screen name="ChangePassword" component={ChangePassword} />
             <Stack.Screen name="PrivatePolicy" component={PrivatePolicy} />
+            <Stack.Screen name="AccountProfile" component={AccountProfile} />
             <Stack.Screen name="Home" component={Home} />
         </Stack.Navigator>
     )

@@ -63,7 +63,9 @@ const Account = ({ navigation }) => {
             </View>
 
             <View style={styles.body}>
-                <TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('AccountProfile')}
+                >
                     <ActionCard icon={<Feather name='user' size={20} color='#000' />} text='My Profile' key={'profile'} />
                 </TouchableOpacity>
                 <Divider style={styles.divider} />
