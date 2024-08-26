@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Image, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { TextInput, MD3Colors, Text as PaperTxt, Button, Checkbox } from "react-native-paper";
+import { TextInput, MD3Colors, Text as PaperTxt, Checkbox } from "react-native-paper";
 import { COLORS, FONT_COLORS } from "../../assets/styles/variables";
 import { DividerWithTxt } from "../../components/global/DividerWithTxt";
 import { GLOBAL_STYLES } from "../../assets/styles/styles";
@@ -12,7 +12,6 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../redux/Store";
 import { ParamListBase, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState("");
@@ -71,7 +70,7 @@ const Login: React.FC = () => {
                 />
                 <Text style={styles.title}>
                     Welcome back 👋 {'\n'}
-                    to <Text style={styles.specialTxt}>SAMS</Text>
+                    to <Text style={styles.specialTxt} onPress={() => console.log("Onclick sams")}>SAMS</Text>
                 </Text>
                 <Text style={styles.blurTxt}>Hello there, login to continue</Text>
             </View>
@@ -85,11 +84,12 @@ const Login: React.FC = () => {
                         : styles.defaultOutline}
                     onFocus={() => setFocusInput('email')}
                     onBlur={() => setFocusInput(undefined)}
-                    style={[styles.input, { marginTop: 10 }]}
+                    style={[styles.input, { marginTop: 10, backgroundColor: "#FFF" }]}
                     theme={{
                         colors: {
-                            primary: COLORS.skyBase, text: FONT_COLORS.greyFontColor
-                        }
+                            primary: COLORS.skyBlue,
+                            text: FONT_COLORS.greyFontColor,
+                        },
                     }}
                     onChangeText={val => setEmail(val)}
                 />
@@ -98,7 +98,7 @@ const Login: React.FC = () => {
                     label='Password'
                     placeholder="Password"
                     secureTextEntry={secureTextEntry}
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: "#FFF" }]}
                     outlineStyle={
                         focusInput === 'password'
                             ? styles.outlineInputFocus
@@ -108,7 +108,8 @@ const Login: React.FC = () => {
                     onBlur={() => setFocusInput(undefined)}
                     theme={{
                         colors: {
-                            primary: COLORS.skyBase, text: FONT_COLORS.greyFontColor
+                            primary: COLORS.skyBlue,
+                            text: FONT_COLORS.greyFontColor
                         }
                     }}
                     onChangeText={val => setPassword(val)}
@@ -135,7 +136,7 @@ const Login: React.FC = () => {
                         style={{
                             marginVertical: 20,
                         }}
-                        onPress={() => { console.log("user info ", userInfo); }}
+                        onPress={() => { navigation.navigate('FORGOT_PASSWORD') }}
                     >
                         <PaperTxt style={styles.forgotPassTxt}>Forgot Password?</PaperTxt>
                     </TouchableOpacity>

@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View, StyleSheet, Image, TouchableOpacity, Dimensions, Pressable, ScrollView } from 'react-native'
 import { Text } from 'react-native-paper'
 import Swiper from 'react-native-swiper'
 import moment from 'moment'
-import { ParamListBase, useNavigation } from '@react-navigation/native'
+import { ParamListBase, useFocusEffect, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import useDispatch from '../../redux/UseDispatch'
 import { useToast } from 'react-native-toast-notifications'
@@ -12,7 +12,6 @@ import { RootState } from '../../redux/Store'
 
 import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import { getScheduleByDay, getTodaySchedule } from '../../redux/slice/Schedule'
-import { Slots } from '../../models/schedule/Slot'
 import { DayCard } from './cards/DayCard'
 import SmallCard from './cards/SmallCard'
 import ActivityCard from './cards/ActivityCard'
@@ -20,7 +19,6 @@ import ActivityCard from './cards/ActivityCard'
 import { PermissionsAndroid } from 'react-native';
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
 import { getAllSemester } from '../../redux/slice/Semester'
-import { AsyncStorageHelpers } from '../../hooks/helpers/AsyncStorage'
 import { ScheduleResponse } from '../../models/schedule/ScheduleResponse'
 import { validateStatusSchedule } from '../../hooks/helpers/ScheduleHelper'
 import { HelperService } from '../../hooks/helpers/HelperFunc'
@@ -39,6 +37,10 @@ type Dashboard = {
   todayClass: string,
   subjectPrepare: string[]
 }
+type SelectedInfo = {
+  currentDate: Date,
+  selectedDate: string
+}
 
 const Home = () => {
   const { data, todaySchedules, error } = useSelector((state: RootState) => state.schedule)
@@ -55,8 +57,10 @@ const Home = () => {
   const [currentDay, setCurrentDay] = useState(new Date());
   const [currentSemester, setCurrentSemester] = useState<number>(5);
   const [dashBoardInfo, setDashboardInfo] = useState<Dashboard | undefined>(undefined);
+  const [selectedInfo, setSelectedInfo] = useState<SelectedInfo>({ currentDate: new Date(), selectedDate: 'Today' });
+  const [isFocus, setIsFocus] = useState<boolean>(false);
 
-  const weeks = React.useMemo(() => {
+  const weeks = useMemo(() => {
     const start = moment().add(0, 'weeks').startOf('week');
 
     return [-1, 0, 1].map(adj => {
@@ -151,7 +155,7 @@ const Home = () => {
         }
       }
       // console.log("cateried ", todaySchedules);
-      console.log("dashboardInfo ", dashboardInfoVal);
+      // console.log("dashboardInfo ", dashboardInfoVal);
     } catch (error) {
       console.log('error when calculating dashboard');
     }
@@ -173,15 +177,29 @@ const Home = () => {
   }
 
   useEffect(() => {
-    if (semesters.length === 0) {
+    if (semesters && semesters.length === 0) {
       dispatch(getAllSemester());
+    }
+
+    if (todaySchedules && todaySchedules.length > 0) {
+      const calculateDashboard = setInterval(() => {
+        if (todaySchedules.length > 0) {
+          lectureDashboardCalculator();
+        } else {
+          clearInterval(calculateDashboard);
+        }
+      }, 60000)
+
+      return () => {
+        clearInterval(calculateDashboard);
+      }
     }
   }, [])
 
   useEffect(() => {
     const lecturerId = userInfo?.result?.id
     let semesterId = 5
-    if (semesters.length !== 0) {
+    if (semesters && semesters.length !== 0) {
       semesters.forEach(item => {
         if (item.semesterStatus === 2) {
           setCurrentSemester(item.semesterID);
@@ -198,17 +216,37 @@ const Home = () => {
   }, [semesters])
 
   useEffect(() => {
+    //Fetch schedule by day
     const daySelected = moment(currentDay).format('YYYY-MM-DD');
     const lecturerId = userInfo?.result?.id;
-    console.log("Current Day selected----------------- ", daySelected);
+    console.log("Current Day selected----------------- ", currentDay);
     if (lecturerId && semesters && currentSemester) {
       dispatch(getScheduleByDay({ lecturerId, semesterId: currentSemester, date: daySelected }))
+    }
+    //Display date info
+    if (currentDay.getDate() === selectedInfo.currentDate.getDate()) {
+      setSelectedInfo(prev => ({ ...prev, selectedDate: 'Today' }))
+    } else {
+      const fmtDate = moment(currentDay).format('DD-MM')
+      setSelectedInfo(prev => ({ ...prev, selectedDate: fmtDate }))
     }
   }, [currentDay])
 
   useEffect(() => {
     lectureDashboardCalculator();
-  }, [todaySchedules]);
+  }, [todaySchedules, data]);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Code to run when the screen is focused
+      setCurrentDay(new Date())
+
+      return () => {
+        // Code to run when the screen is unfocused
+        console.log('Screen is unfocused');
+      };
+    }, [])
+  );
 
   return (
     <ScrollView style={styles.container}>
@@ -294,6 +332,8 @@ const Home = () => {
               detail={dashBoardInfo?.upcomingTxt ? (dashBoardInfo.curUpClass.classCode) : ('Done')}
               subDetail='View Detail'
               key={'dashboardCard1'}
+              isUpcoming={true}
+              upComingSchedule={dashBoardInfo?.curUpClass}
             />
             <SmallCard
               titleIcon={require('../../assets/icons/classIcon.png')}
@@ -329,7 +369,7 @@ const Home = () => {
                       </View>
                     )
                   }
-                }) : (<Text style={styles.detail}>Done</Text>)
+                }) : (<Text style={[styles.detail, { width: '100%' }]}>Done</Text>)
               }
             </View>
           </View>
@@ -337,30 +377,45 @@ const Home = () => {
 
         <View style={styles.classActivities}>
           <View style={styles.activitiesHeader}>
-            <Text style={GLOBAL_STYLES.titleLabel}>Today Activities | {data.length}</Text>
-            <TouchableOpacity>
+            <Text style={GLOBAL_STYLES.titleLabel}>{selectedInfo.selectedDate} Activities | {data.length}</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Schedule')}
+            >
               <Text style={{ color: FONT_COLORS.blueFontColor }}>View All</Text>
             </TouchableOpacity>
           </View>
 
           <View style={{ gap: 10 }}>
             {
-              data.map((item, i) => {
-                const timeSlot = Slots[item.slotNumber - 1].timeStart + ' - ' + Slots[item.slotNumber - 1].timeEnd
+              data.length > 0 ? data.map((item, i) => {
+                const startTime = item.startTime.substring(0, 5);
+                const endTime = item.endTime.substring(0, 5);
                 return (
-                  <ActivityCard
-                    room={item.roomName}
-                    status={item.status ?? 'Past'}
-                    subjectCode={item.subjectCode}
-                    time={timeSlot}
-                    key={`schedule_${i}`} />
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('ClassDetail', { schedule: item })}
+                    key={`schedule_${i}`}
+                  >
+                    <ActivityCard
+                      room={item.roomName}
+                      status={item.status ?? 'Past'}
+                      subjectCode={item.subjectCode}
+                      startTime={startTime}
+                      endTime={endTime}
+                    />
+                  </TouchableOpacity>
                 )
-              })
+              }) : (
+                <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                  <Image
+                    style={{ width: 100, height: 100 }}
+                    source={require('../../assets/imgs/nodata_black.png')} alt='No data image' />
+                  <Text>No Schedule Found</Text>
+                </View>
+              )
             }
           </View>
         </View>
       </View>
-
     </ScrollView>
   )
 }

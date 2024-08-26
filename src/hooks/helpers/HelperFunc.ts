@@ -5,16 +5,13 @@ interface WeekDay {
   date: Date;
 }
 
-const getWeekFromDate = (inputDate: Date): WeekDay[] => {
+const getWeekFromDate = (inputDate: Date): Date[] => {
   const startOfWeek = moment(inputDate).startOf('week');
-  const week: WeekDay[] = [];
+  const week: Date[] = [];
 
   for (let i = 0; i < 7; i++) {
     const date = moment(startOfWeek).add(i, 'days').toDate();
-    week.push({
-      weekday: moment(date).format('ddd'),
-      date: date,
-    });
+    week.push(date);
   }
 
   return week;
@@ -25,7 +22,17 @@ const removeDuplicates = (arr: string[]): string[] => {
   return Array.from(uniqueSet);
 };
 
+const emailChecker = (email: string): boolean => {
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+  return emailRegex.test(email);
+};
+
+const randomDelay = () => Math.floor(Math.random() * 550) + 200;
+
 export const HelperService = {
   getWeekFromDate,
   removeDuplicates,
+  emailChecker,
+  randomDelay,
 };

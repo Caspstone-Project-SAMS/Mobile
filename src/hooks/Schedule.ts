@@ -28,6 +28,26 @@ const getScheduleByDay = async (
   return response.data;
 };
 
+const getScheduleByWeek = async (
+  lecturerId: string,
+  semesterId: number,
+  quantity: number,
+  startDate: string,
+  endDate: string,
+) => {
+  const response = await axios.get(LECTURER_SCHEDULE_API, {
+    params: {
+      lecturerId,
+      semesterId,
+      quantity,
+      startDate,
+      endDate,
+    },
+  });
+  return response.data;
+};
+
 export const ScheduleService = {
   getScheduleByDay,
+  getScheduleByWeek,
 };
