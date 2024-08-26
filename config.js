@@ -4,6 +4,7 @@ import {
   DefaultTheme,
   MD2LightTheme,
 } from 'react-native-paper';
+import { COLORS } from './src/assets/styles/variables';
 
 const fontConfig = {
   web: {

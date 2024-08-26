@@ -1,23 +1,62 @@
-import React, { useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { TextInput, MD3Colors, Text as PaperTxt, Button } from "react-native-paper";
+import React, { useEffect, useState } from "react";
+import { Image, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { TextInput, MD3Colors, Text as PaperTxt, Checkbox } from "react-native-paper";
 import { COLORS, FONT_COLORS } from "../../assets/styles/variables";
 import { DividerWithTxt } from "../../components/global/DividerWithTxt";
 import { GLOBAL_STYLES } from "../../assets/styles/styles";
 import CustomBtn from "../../components/global/CustomBtn";
 import useDispatch from "../../redux/UseDispatch";
-import { login } from "../../redux/slice/Auth";
+import { login, updateUser } from "../../redux/slice/Auth";
+import { AsyncStorageHelpers } from "../../hooks/helpers/AsyncStorage";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/Store";
+import { ParamListBase, useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [secureTextEntry, setSecureTextEntry] = useState(true);
+    const [isRemember, setIsRemember] = useState(false);
+    const userInfo = useSelector((state: RootState) => state.auth);
+
     const dispatch = useDispatch()
+    // const navigation = useNavigation()
+    const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
+
 
     const [focusInput, setFocusInput] = useState<string | undefined>();
     const handleLogin = async () => {
-        await dispatch(login({ username: email, password }));
+        await dispatch(login({ username: email, password, isRemember }));
     };
+
+    const handleSendEmail = () => {
+        const recipient = 'ducnhhse161458@fpt.edu.vn';
+        const subject = 'Create Account For SAMS Application';
+        const body = `Your name: \nYour email: \nYour phone number: `;
+
+        const mailtoUrl = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+        Linking.openURL(mailtoUrl).catch(err => console.error('Error:', err));
+    };
+
+    // redirect to home if session valid - 7days
+    useEffect(() => {
+        const autoLogin = async () => {
+            const currentTime = new Date().getTime();
+            const oldSession = await AsyncStorageHelpers.getObjData('session');
+            if (oldSession) {
+                const { expiredTime } = JSON.parse(oldSession);
+                if (expiredTime >= currentTime) {
+                    dispatch(updateUser())
+                }
+            } else {
+                AsyncStorageHelpers.removeValue('userAuth');
+                AsyncStorageHelpers.removeValue('session');
+            }
+        }
+        autoLogin();
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -25,13 +64,13 @@ const Login: React.FC = () => {
                 <Image
                     source={require('../../assets/imgs/logo_cut-removebg-preview.png')}
                     style={{
-                        width: 150,
-                        height: 150,
+                        width: 100,
+                        height: 100,
                     }}
                 />
                 <Text style={styles.title}>
                     Welcome back 👋 {'\n'}
-                    to <Text style={styles.specialTxt}>SAMS</Text>
+                    to <Text style={styles.specialTxt} onPress={() => console.log("Onclick sams")}>SAMS</Text>
                 </Text>
                 <Text style={styles.blurTxt}>Hello there, login to continue</Text>
             </View>
@@ -45,11 +84,12 @@ const Login: React.FC = () => {
                         : styles.defaultOutline}
                     onFocus={() => setFocusInput('email')}
                     onBlur={() => setFocusInput(undefined)}
-                    style={[styles.input, { marginTop: 10 }]}
+                    style={[styles.input, { marginTop: 10, backgroundColor: "#FFF" }]}
                     theme={{
                         colors: {
-                            primary: COLORS.skyBase, text: FONT_COLORS.greyFontColor
-                        }
+                            primary: COLORS.skyBlue,
+                            text: FONT_COLORS.greyFontColor,
+                        },
                     }}
                     onChangeText={val => setEmail(val)}
                 />
@@ -58,7 +98,7 @@ const Login: React.FC = () => {
                     label='Password'
                     placeholder="Password"
                     secureTextEntry={secureTextEntry}
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: "#FFF" }]}
                     outlineStyle={
                         focusInput === 'password'
                             ? styles.outlineInputFocus
@@ -68,7 +108,8 @@ const Login: React.FC = () => {
                     onBlur={() => setFocusInput(undefined)}
                     theme={{
                         colors: {
-                            primary: COLORS.skyBase, text: FONT_COLORS.greyFontColor
+                            primary: COLORS.skyBlue,
+                            text: FONT_COLORS.greyFontColor
                         }
                     }}
                     onChangeText={val => setPassword(val)}
@@ -80,13 +121,26 @@ const Login: React.FC = () => {
                         />
                     }
                 />
-                <TouchableOpacity
-                    style={{
-                        marginVertical: 20,
-                    }}
-                >
-                    <PaperTxt style={styles.forgotPassTxt}>Forgot Password?</PaperTxt>
-                </TouchableOpacity>
+                <View style={styles.moreActionLogin}>
+                    <View style={GLOBAL_STYLES.horizontalBetweenCenter}>
+                        <Checkbox
+                            status={isRemember ? 'checked' : 'unchecked'}
+                            onPress={() => {
+                                setIsRemember(!isRemember);
+                            }}
+                            color="#2563EB"
+                        />
+                        <Text>Remember me</Text>
+                    </View>
+                    <TouchableOpacity
+                        style={{
+                            marginVertical: 20,
+                        }}
+                        onPress={() => { navigation.navigate('FORGOT_PASSWORD') }}
+                    >
+                        <PaperTxt style={styles.forgotPassTxt}>Forgot Password?</PaperTxt>
+                    </TouchableOpacity>
+                </View>
                 <TouchableOpacity
                     activeOpacity={0.6}
                     onPress={() => handleLogin()}
@@ -112,7 +166,9 @@ const Login: React.FC = () => {
                 <PaperTxt>
                     Didn't have an account? {' '}
                 </PaperTxt>
-                <TouchableOpacity style={{ display: 'flex', alignItems: 'center' }}>
+                <TouchableOpacity style={{ display: 'flex', alignItems: 'center' }}
+                    onPress={() => handleSendEmail()}
+                >
                     <PaperTxt style={{ color: COLORS.skyBase, textAlignVertical: 'center' }}>Contact Us!</PaperTxt>
                 </TouchableOpacity>
             </View>
@@ -126,7 +182,8 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: 20,
-        paddingVertical: 15
+        paddingVertical: 15,
+        backgroundColor: '#FFF'
     },
     header: {
         paddingTop: 5,
@@ -151,6 +208,11 @@ const styles = StyleSheet.create({
         width: 'auto',
         backgroundColor: '#f1f4ff',
         paddingHorizontal: 8,
+    },
+    moreActionLogin: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
     },
     outlineInputFocus: {
         borderColor: COLORS.skyBase,

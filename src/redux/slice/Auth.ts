@@ -3,7 +3,8 @@ import { GoogleLogin_OnSuccess } from '../../models/auth/GoogleResponse';
 import { UserInfo } from '../../models/UserInfo';
 import axios, { AxiosError } from 'axios';
 import AuthService from '../../hooks/Auth';
-import { useToast } from 'react-native-toast-notifications';
+import { AsyncStorageHelpers } from '../../hooks/helpers/AsyncStorage';
+import { Toast } from 'react-native-toast-notifications';
 
 interface AuthState {
   authStatus: boolean;
@@ -33,20 +34,36 @@ const initialState: AuthState = {
 //     console.log('err at show toast', error);
 //   }
 // };
+const updateUser = createAsyncThunk(
+  'auth/updateUser',
+  async (_, { rejectWithValue }) => {
+    const userAuth = await AsyncStorageHelpers.getObjData('userAuth');
+    if (userAuth) {
+      return JSON.parse(userAuth);
+    }
+    return rejectWithValue('User Info Not Found!');
+  },
+);
 
 const login = createAsyncThunk(
   'auth/login',
-  async (arg: { username: string; password: string }, { rejectWithValue }) => {
-    // console.log('Imhereeeeeeee ');
+  async (
+    arg: { username: string; password: string; isRemember: boolean },
+    { rejectWithValue },
+  ) => {
     const { username, password } = arg;
     try {
-      //Toast chỉ nhận promise, nhưng redux async thunk cần trả về promise đã hoàn thành để thực hiện pending, fulfilled,...
       const loginPromise = AuthService.login(username, password);
       const result = await loginPromise;
       // console.log('User result here ', result);
       return result;
     } catch (error: any) {
       if (axios.isAxiosError(error) && error.response) {
+        Toast.show('Username or password wrongs', {
+          type: 'danger',
+          placement: 'top',
+        });
+
         console.log('hi error here ', error);
         throw new AxiosError(error.response);
       }
@@ -57,7 +74,7 @@ const login = createAsyncThunk(
 // {
 //   "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImFjZDg1ZDQ3LTA0MTktNDEwOS1iMjUxLTA4ZGM4NWZmMDE2MCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJhZG1pbjEiLCJzY29wZSI6IkFkbWluIiwiZXhwIjoxNzE5Mzk1NTAzLCJpc3MiOiJsb2NhbGhvc3Q6NTAwMC1wcm9qZWN0LWJhc2Utc2VydmljZSIsImF1ZCI6ImxvY2FsaG9zdDo1MDAwLXByb2plY3QtYmFzZS1zZXJ2aWNlIn0.0jRYNd_BTWondtNo_P-bY55rn_NBkOA0cSDe1W9DQ2D33WyayCbA6bM3xXnrqF0xgL4lK6XDAJaun__tj7F4DP392Ui0C5GRJmKBiOQeNnCjyDMf3GJr7Bo_XXsZTllY6-tdTu28AzFRvpl-_sxZI-T7FfhfcRdsiMTmNvG-nQEAz0Cf9LVXWofnR56mukIiMEPtyDhe9vXU-ZYlAC_-ANN0T8ZB3XzWyToqH08ah_3tjS2KCPAo5XGn9F679WU2EC2PssjGULFv2ER6vtLgfR_ZGFRDXSeApI7I-DVeRBXbhLwcIyBwqN_njJl9np8k7FDKFVbJKuwheDEcfv-QGA",
 //   "result": {
-//     "id": "acd85d47-0419-4109-b251-08dc85ff0160",
+//     "id": "a829c0b5-78dc-4194-a424-08dc8640e68a",
 //     "email": null,
 //     "normalizedEmail": null,
 //     "emailConfirmed": false,
@@ -84,6 +101,9 @@ const AuthSlice = createSlice({
   initialState,
   reducers: {
     logout: (state) => {
+      AsyncStorageHelpers.removeValue('userAuth');
+      AsyncStorageHelpers.removeValue('session');
+
       state.authStatus = false;
       state.loadingStatus = false;
       state.googleAuth = undefined;
@@ -91,6 +111,9 @@ const AuthSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    //CreateAction
+
+    //Async thunk
     builder.addCase(login.pending, (state) => {
       return {
         ...state,
@@ -98,15 +121,37 @@ const AuthSlice = createSlice({
       };
     });
     builder.addCase(login.fulfilled, (state, action) => {
-      // console.log('In the case fulfilled, ', action);
-      const { payload } = action;
-      // showToast('Login successfully!', 'success');
-      return {
-        ...state,
-        authStatus: true,
-        loadingStatus: false,
-        userDetail: payload,
-      };
+      const {
+        payload,
+        meta: {
+          arg: { isRemember },
+        },
+      } = action;
+      const userRole = payload?.result?.role.name;
+      // console.log('UserInfo here ', payload);
+      if (userRole && userRole === 'Lecturer') {
+        if (isRemember) {
+          const session = {
+            loginTime: new Date().getTime(),
+            expiredTime: new Date().getTime() + 604800000, //7 days
+          };
+
+          AsyncStorageHelpers.storeObjData('userAuth', JSON.stringify(payload));
+          AsyncStorageHelpers.storeObjData('session', JSON.stringify(session));
+        }
+
+        return {
+          ...state,
+          authStatus: true,
+          loadingStatus: false,
+          userDetail: payload,
+        };
+      } else {
+        Toast.show('Account not supportted, please login on web application.', {
+          type: 'warning',
+          placement: 'top',
+        });
+      }
     });
     builder.addCase(login.rejected, (state) => {
       // showToast('Invalid credentials', 'danger');
@@ -116,10 +161,18 @@ const AuthSlice = createSlice({
         loadingStatus: false,
       };
     });
+    //Auto login
+    builder.addCase(updateUser.fulfilled, (state, { payload }) => {
+      if (payload) {
+        state.authStatus = true;
+        state.loadingStatus = false;
+        state.userDetail = payload;
+      }
+    });
   },
 });
 
-export { login };
+export { login, updateUser };
 export const { logout } = AuthSlice.actions;
 
 export default AuthSlice.reducer;

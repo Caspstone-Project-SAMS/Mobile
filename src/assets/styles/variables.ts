@@ -14,6 +14,7 @@ export const COLORS = {
 
   errorLightRed: '#FE4436',
 
+  greenSystem: '#00D488',
   greenSpBold: '#24D164',
   greenBold: '#4ADE80',
   greenBase: '#86EFAC',
@@ -29,6 +30,12 @@ export const COLORS = {
   yellowBase: '#FBBF24',
 
   borderColor: '#B8B8B8',
+  dividerColor: '#9E9E9E',
+
+  mainBlue: '#0087FD',
+  past: '#94A3B8',
+  active: '#3ABE00',
+  upcoming: '#FBBF24',
 };
 
 export const FONTS = {
@@ -43,4 +50,5 @@ export const FONT_COLORS = {
   blackFontColor: '#000',
   greyFontColor: '#1A1F36', //Main font color
   blurFontColor: '#6B6B6B',
+  blueFontColor: '#0093FE', //Link
 };
