@@ -1,5 +1,5 @@
-const server = 'http://34.81.224.196/api';
-
+const server = 'http://34.81.223.233/api';
+// http://34.81.223.233
 //Auth
 export const USER_AUTH_API = `${server}/Auth`;
 
