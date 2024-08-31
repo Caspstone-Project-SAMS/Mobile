@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { PaperProvider } from 'react-native-paper';
 import { ToastProvider } from 'react-native-toast-notifications';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import Navigator from './src/components/navigator/Navigator';
 import { Provider } from 'react-redux';
@@ -38,11 +39,13 @@ const App: React.FC = () => {
   return (
     <Provider store={Store}>
       <SafeAreaView style={styles.container} onLayout={onLayoutRootView}>
-        <PaperProvider theme={appTheme}>
-          <ToastProvider>
-            <Navigator />
-          </ToastProvider>
-        </PaperProvider>
+        <GestureHandlerRootView>
+          <PaperProvider theme={appTheme}>
+            <ToastProvider>
+              <Navigator />
+            </ToastProvider>
+          </PaperProvider>
+        </GestureHandlerRootView>
       </SafeAreaView>
     </Provider>
   );

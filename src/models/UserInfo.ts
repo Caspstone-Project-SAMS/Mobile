@@ -10,6 +10,7 @@ export interface UserInfo {
 
 interface UserDetail {
   id: string;
+  employeeID: string;
   email?: string;
   avatar?: string;
   gender: number;

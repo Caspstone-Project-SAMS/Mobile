@@ -34,6 +34,13 @@ export const GLOBAL_STYLES = StyleSheet.create({
     fontFamily: 'Lexend-Regular',
   },
 
+  //Card
+  card: {
+    borderWidth: 1,
+    borderRadius: 4,
+    borderColor: COLORS.borderColor,
+  },
+
   //SUB things
   horizontalDivider: {
     width: '100%',
