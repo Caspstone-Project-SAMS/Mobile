@@ -6,7 +6,7 @@ import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../redux/Store'
 import { ModuleService } from '../../hooks/Module'
-import { Module } from '../../models/Module/Module'
+import { Module, ModuleConfig } from '../../models/Module/Module'
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import moment from 'moment'
@@ -14,14 +14,6 @@ import Octicons from 'react-native-vector-icons/Octicons'
 import CustomBtn from '../../components/global/CustomBtn'
 import { Toast } from 'react-native-toast-notifications'
 import { HelperService } from '../../hooks/helpers/HelperFunc'
-
-type ModuleConfig = {
-    preparedTime: string,
-    attendanceDurationMinutes: number, // setting time for module to scan fingerprint since class start
-    connectionLifeTimeSeconds: number, // setting for holding connection after connect
-    connectionSoundDurationMs: number, // Settings sound duration
-    attendanceSoundDurationMs: number,
-}
 
 const initialModule = {
     attendanceDurationMinutes: 0,
@@ -61,9 +53,9 @@ const ConfigModule = ({ navigation }) => {
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
     //logs helpertext
-    const [isErrAttendance, setIsErrAttendance] = useState<boolean>(false);
-    const [isErrConnect, setIsErrConnect] = useState<boolean>(false);
-    const [isErrActive, setIsErrActive] = useState<boolean>(false);
+    const [isErrConnect, setIsErrConnect] = useState<boolean>(false); // connected sound
+    const [isErrAttendance, setIsErrAttendance] = useState<boolean>(false); // take attendance sound
+    const [isErrActive, setIsErrActive] = useState<boolean>(false); //active scan fingerprint
     const [isErrConnectLifeTime, setIsErrConnectLifeTime] = useState<boolean>(false);
 
     const showDatePicker = () => {
@@ -93,15 +85,83 @@ const ConfigModule = ({ navigation }) => {
         }
     }
 
+    const clearState = () => {
+        setIsErrAttendance(false)
+        setIsErrConnect(false)
+        setIsErrActive(false)
+        setIsErrConnectLifeTime(false)
+    }
+
     const onSaveConfig = () => {
+        clearState();
         if (selectedModule.moduleID !== 0) {
+            const connectedSound = configData.connectionSoundDurationMs;
+            const attendSound = configData.attendanceSoundDurationMs;
+            const attendDuration = configData.attendanceDurationMinutes;
+            const lifeTime = configData.connectionLifeTimeSeconds
             let isValid = true;
-            switch (configData.attendanceDurationMinutes < 15 || configData.attendanceDurationMinutes > 135) {
-                case false:
-                    isValid = false
-                    break;
-                default:
-                    break;
+            console.log("Gonna check this connectedSound ------------ ", connectedSound, ' => ', typeof (connectedSound));
+            //Sounds
+            if (
+                (attendSound < 100
+                    || attendSound > 5000
+                    || !HelperService.isNumber(String(attendSound)))
+                && isAttendanceSound
+            ) {
+                console.log("error at attendSound - ", !HelperService.isNumber(String(attendSound)));
+                setIsErrAttendance(true);
+                isValid = false;
+            }
+            if (
+                (connectedSound < 100
+                    || connectedSound > 5000
+                    || !HelperService.isNumber(String(connectedSound)))
+                && isConnectionSound
+            ) {
+                console.log("error at connectedSound - ", !HelperService.isNumber(String(connectedSound)));
+                setIsErrConnect(true);
+                isValid = false;
+            }
+
+            //Time stay active
+            if (
+                attendDuration < 15
+                || attendDuration > 135
+                || !HelperService.isNumber(String(attendDuration))
+            ) {
+                setIsErrActive(true);
+                isValid = false;
+            }
+            //Stay connect to server
+            if (
+                lifeTime < 20
+                || lifeTime > 10000
+                || !HelperService.isNumber(String(lifeTime))
+            ) {
+                setIsErrConnectLifeTime(true);
+                isValid = false;
+            }
+
+            if (isValid) {
+                const fmtData = {
+                    ...configData,
+                    autoPrepare: isAutoPrepare,
+                    attendanceSound: isAttendanceSound,
+                    connectionSound: isConnectionSound
+                }
+                console.log(`Im gonna send module id ${selectedModule.moduleID} to server `, fmtData);
+                const promise = ModuleService.configModule(selectedModule.moduleID, fmtData);
+                promise.then(data => {
+                    console.log("Config ok, ", data);
+                    Toast.show('Config successfully', { type: 'success', placement: 'top' })
+                    clearState();
+                    setSelectedModule(initialModule);
+                    getModuleList();
+                }).catch(err => {
+                    console.log("error when config ", JSON.stringify(err));
+                })
+            } else {
+                Toast.show('Unvalid value, please check again!', { type: 'warning', placement: 'top' })
             }
         } else {
             Toast.show('Please select an module before saving!', { type: 'normal', placement: 'top' })
@@ -253,11 +313,11 @@ const ConfigModule = ({ navigation }) => {
                             />
                         </View>
                         {
-                            // isErrConnect && (
-                            //     <HelperText type="error" visible={isErrConnect}>
-                            //         Duration must at least 100 and not exceed 5000 and not contain special chars!
-                            //     </HelperText>
-                            // )
+                            isErrConnect && (
+                                <HelperText type="error" visible={isErrConnect}>
+                                    Duration must at least 100 and not exceed 5000 and not contain special chars!
+                                </HelperText>
+                            )
                         }
                         <Text style={styles.desTxt}>
                             Adjust beeping sounds duration when connected.
@@ -291,7 +351,8 @@ const ConfigModule = ({ navigation }) => {
                                 mode="outlined"
                                 keyboardType="numeric"
                                 placeholder={configData.attendanceSoundDurationMs.toString()}
-                                onChangeText={val => setConfigData(prev => ({ ...prev }))}
+                                value={configData.attendanceSoundDurationMs.toString()}
+                                onChangeText={(val: number) => setConfigData(prev => ({ ...prev, attendanceSoundDurationMs: val }))}
                                 outlineStyle={{
                                     borderRadius: 0,
                                     borderTopWidth: 0,
@@ -302,11 +363,11 @@ const ConfigModule = ({ navigation }) => {
                         </View>
                         {/* Chua co func */}
                         {
-                            // isErrAttendance && (
-                            //     <HelperText type="error" visible={isErrAttendance}>
-                            //         Duration must at least 100 and not exceed 5000 and not contain special chars!
-                            //     </HelperText>
-                            // )
+                            isErrAttendance && (
+                                <HelperText type="error" visible={isErrAttendance}>
+                                    Duration must at least 100 and not exceed 5000 and not contain special chars!
+                                </HelperText>
+                            )
                         }
                         <Text style={styles.desTxt}>
                             Adjust beeping sounds duration when user scan finger successfully.
@@ -331,6 +392,7 @@ const ConfigModule = ({ navigation }) => {
                                     mode="outlined"
                                     keyboardType="numeric"
                                     placeholder={configData.attendanceDurationMinutes.toString()}
+                                    value={configData.attendanceDurationMinutes.toString()}
                                     onChangeText={(val: number) => {
                                         setConfigData(prev => ({ ...prev, attendanceDurationMinutes: val }))
                                     }}
@@ -342,6 +404,13 @@ const ConfigModule = ({ navigation }) => {
                                     }}
                                 />
                             </View>
+                            {
+                                isErrActive && (
+                                    <HelperText type="error" visible={isErrActive}>
+                                        Duration must at least 15 and not exceed 135 and not contain special chars!
+                                    </HelperText>
+                                )
+                            }
                             <Text style={styles.desTxt}>
                                 Adjust time for module active scanning fingerprint since class started.
                             </Text>
@@ -365,6 +434,7 @@ const ConfigModule = ({ navigation }) => {
                                     mode="outlined"
                                     keyboardType="numeric"
                                     placeholder={configData.connectionLifeTimeSeconds.toString()}
+                                    value={configData.connectionLifeTimeSeconds.toString()}
                                     onChangeText={(val: number) => {
                                         setConfigData(prev => ({ ...prev, connectionLifeTimeSeconds: val }))
                                     }}
@@ -379,7 +449,7 @@ const ConfigModule = ({ navigation }) => {
                             {
                                 isErrConnectLifeTime && (
                                     <HelperText type="error" visible={isErrConnectLifeTime}>
-                                        Duration must at least 100 and not exceed 5000 and not contain special chars!
+                                        Duration must at least 20 and not exceed 10000 and not contain special chars!
                                     </HelperText>
                                 )
                             }

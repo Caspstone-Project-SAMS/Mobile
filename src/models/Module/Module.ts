@@ -24,3 +24,11 @@ interface Employee {
   phoneNumber: string;
   department: string;
 }
+
+export interface ModuleConfig {
+  preparedTime: string;
+  attendanceDurationMinutes: number; // setting time for module to scan fingerprint since class start
+  connectionLifeTimeSeconds: number; // setting for holding connection after connect
+  connectionSoundDurationMs: number; // Settings sound duration
+  attendanceSoundDurationMs: number;
+}
