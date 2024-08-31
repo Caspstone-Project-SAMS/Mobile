@@ -1812,6 +1812,13 @@
     prompts "^2.4.2"
     semver "^7.5.2"
 
+"@react-native-community/datetimepicker@^8.2.0":
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/@react-native-community/datetimepicker/-/datetimepicker-8.2.0.tgz#f62ac4fc12bd527fbbe93934e6c1cfbb7ba570f3"
+  integrity sha512-qrUPhiBvKGuG9Y+vOqsc56RPFcHa1SU2qbAMT0hfGkoFIj3FodE0VuPVrEa8fgy7kcD5NQmkZIKgHOBLV0+hWg==
+  dependencies:
+    invariant "^2.2.4"
+
 "@react-native/assets-registry@0.74.87":
   version "0.74.87"
   resolved "https://registry.yarnpkg.com/@react-native/assets-registry/-/assets-registry-0.74.87.tgz#7dda64e48db14597e19e15f679e31abbb1c1fb4d"
@@ -2334,15 +2341,6 @@
   dependencies:
     "@types/react" "*"
     "@types/xdate" "*"
-    react-native "*"
-
-"@types/react-native-datepicker@^1.7.6":
-  version "1.7.6"
-  resolved "https://registry.yarnpkg.com/@types/react-native-datepicker/-/react-native-datepicker-1.7.6.tgz#cfd5001bdd9df28f4590c62b2940d5ede865c588"
-  integrity sha512-CwcCBpaz3TINH2XbEdKCf+bd6dv/u2kRDapyC9BB/g/b0bfvidRxeWGV1sH8HeGr9e005o8U9UvyenOfIr9cqA==
-  dependencies:
-    "@types/react" "*"
-    moment ">=2.14.0"
     react-native "*"
 
 "@types/react-native-vector-icons@^6.4.18":
@@ -6239,7 +6237,7 @@ mkdirp@^1.0.3, mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-moment@>=2.14.0, moment@^2.29.4, moment@^2.30.1:
+moment@^2.29.4, moment@^2.30.1:
   version "2.30.1"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.30.1.tgz#f8c91c07b7a786e30c59926df530b4eac96974ae"
   integrity sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==
@@ -6969,11 +6967,6 @@ react-native-calendars@^1.1306.0:
   optionalDependencies:
     moment "^2.29.4"
 
-react-native-date-picker@^5.0.6:
-  version "5.0.6"
-  resolved "https://registry.yarnpkg.com/react-native-date-picker/-/react-native-date-picker-5.0.6.tgz#801319702c34659e4458d3ad3be14a8b96796e0a"
-  integrity sha512-o+HXzyfFZfLzQz6Sh105flUpQey56BwyYA9GH17Y8ufUvB6uZtffRRzlE5OB/evYzqq4WWTUjlU+8rOPmLuNtg==
-
 react-native-dropdown-picker@^5.4.6:
   version "5.4.6"
   resolved "https://registry.yarnpkg.com/react-native-dropdown-picker/-/react-native-dropdown-picker-5.4.6.tgz#3736fc468de4a295e4df8d1f65ed2eadaf9b445f"
@@ -6988,6 +6981,13 @@ react-native-gesture-handler@~2.16.1:
     hoist-non-react-statics "^3.3.0"
     invariant "^2.2.4"
     lodash "^4.17.21"
+    prop-types "^15.7.2"
+
+react-native-modal-datetime-picker@^18.0.0:
+  version "18.0.0"
+  resolved "https://registry.yarnpkg.com/react-native-modal-datetime-picker/-/react-native-modal-datetime-picker-18.0.0.tgz#0555b2c9ab34318629a251f250de68a0e3b3980d"
+  integrity sha512-0jdvhhraZQlRACwr7pM6vmZ2kxgzJ4CpnmV6J3TVA6MrXMXK6Zo/upRBKkRp0+fTOiKuNblzesA2U59rYo6SGA==
+  dependencies:
     prop-types "^15.7.2"
 
 react-native-paper@^5.12.3:
