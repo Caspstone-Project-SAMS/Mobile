@@ -168,7 +168,7 @@ const Schedule = ({ navigation }) => {
 
     useEffect(() => {
         const week: Date[] = HelperService.getWeekFromDate(today)
-        if (userDetail && userDetail.id) {
+        if (userDetail && userDetail.id && semesters.length > 0) {
             const currentSemester = semesters.filter(item => item.semesterStatus === 2);
             dispatch(getScheduleByWeek({ lecturerID: userDetail.id, semesterID: currentSemester[0].semesterID, week: week }));
         }
@@ -183,7 +183,7 @@ const Schedule = ({ navigation }) => {
         if (selected) {
             const fmtDay = new Date(selected)
             const week: Date[] = HelperService.getWeekFromDate(fmtDay)
-            if (userDetail && userDetail.id) {
+            if (userDetail && userDetail.id && semesters.length > 0) {
                 const currentSemester = semesters.filter(item => item.semesterStatus === 2);
                 dispatch(getScheduleByWeek({ lecturerID: userDetail.id, semesterID: currentSemester[0].semesterID, week: week }));
             }

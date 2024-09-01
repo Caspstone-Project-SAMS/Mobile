@@ -102,12 +102,11 @@ const SetUpModule: React.FC = ({ navigation }) => {
         } else {
             const promise = ModuleService.setUpWifi(selectedWifi, passwordForModule);
             setOnFetchLoading(true);
-            Toast.show(`Setup '${selectedWifi}' - '${passwordForModule}'`, { type: 'success', placement: 'top', duration: 10000 })
-            console.log(`   On sending this '${selectedWifi}' - '${passwordForModule}' to module`);
+            // Toast.show(`Setup '${selectedWifi}' - '${passwordForModule}'`, { type: 'success', placement: 'top', duration: 10000 })
+            // console.log(`   On sending this '${selectedWifi}' - '${passwordForModule}' to module`);
             promise.then(data => {
                 setOnFetchLoading(false);
-                Toast.show(`Setup ${selectedWifi} for module successfully`, { type: 'success', placement: 'top' })
-                Toast.show(`Setup '${selectedWifi}' - '${passwordForModule}'`, { type: 'success', placement: 'top', duration: 10000 })
+                Toast.show(`Setup ${selectedWifi} for module successfully, please check on module.`, { type: 'success', placement: 'top', duration: 5200 })
                 setSelectedView('wifi');
             }).catch(err => {
                 setOnFetchLoading(false);
