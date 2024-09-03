@@ -127,7 +127,7 @@ const getScheduleByWeek = createAsyncThunk(
         error.response?.data === 'Lecturer not have any Schedule'
       ) {
         console.log('No data');
-      } else{
+      } else {
         console.log('Error when get schedule', error.response?.data);
       }
     }
@@ -150,24 +150,26 @@ const ScheduleSlice = createSlice({
 
       state.data = [];
       state.todaySchedules = [];
-      payload.forEach((newItem: ScheduleResponse) => {
-        //Calculate schedule status
-        const formattedValue = formatScheduleRepsonse(newItem);
-        state.data.push(formattedValue);
-        state.todaySchedules.push(formattedValue);
+      if (payload) {
+        payload.forEach((newItem: ScheduleResponse) => {
+          //Calculate schedule status
+          const formattedValue = formatScheduleRepsonse(newItem);
+          state.data.push(formattedValue);
+          state.todaySchedules.push(formattedValue);
 
-        //Hold previous data and pushing new in array
-        // const existingItemIndex = state.data.findIndex(
-        //   (item) =>
-        //     item.date === formattedValue.date &&
-        //     item.slotNumber === formattedValue.slotNumber,
-        // );
-        // if (existingItemIndex !== -1) {
-        //   state.data[existingItemIndex] = formattedValue;
-        // } else {
-        //   state.data.push(formattedValue);
-        // }
-      });
+          //Hold previous data and pushing new in array
+          // const existingItemIndex = state.data.findIndex(
+          //   (item) =>
+          //     item.date === formattedValue.date &&
+          //     item.slotNumber === formattedValue.slotNumber,
+          // );
+          // if (existingItemIndex !== -1) {
+          //   state.data[existingItemIndex] = formattedValue;
+          // } else {
+          //   state.data.push(formattedValue);
+          // }
+        });
+      }
     });
     builder.addCase(getTodaySchedule.rejected, (state, action) => {
       const { payload } = action;
@@ -185,11 +187,13 @@ const ScheduleSlice = createSlice({
       state.loading = false;
 
       state.data = [];
-      payload.forEach((newItem: ScheduleResponse) => {
-        //Calculate schedule status
-        const formattedValue = formatScheduleRepsonse(newItem);
-        state.data.push(formattedValue);
-      });
+      if (payload) {
+        payload.forEach((newItem: ScheduleResponse) => {
+          //Calculate schedule status
+          const formattedValue = formatScheduleRepsonse(newItem);
+          state.data.push(formattedValue);
+        });
+      }
     });
     builder.addCase(getScheduleByDay.rejected, (state, { payload }) => {
       // console.log('Change her in schedule ', payload);
@@ -202,11 +206,13 @@ const ScheduleSlice = createSlice({
       state.loading = false;
 
       state.data = [];
-      payload.forEach((newItem: ScheduleResponse) => {
-        //Calculate schedule status
-        const formattedValue = formatScheduleRepsonse(newItem);
-        state.data.push(formattedValue);
-      });
+      if (payload) {
+        payload.forEach((newItem: ScheduleResponse) => {
+          //Calculate schedule status
+          const formattedValue = formatScheduleRepsonse(newItem);
+          state.data.push(formattedValue);
+        });
+      }
     });
     builder.addCase(getScheduleByWeek.rejected, (state, action) => {
       const { payload } = action;

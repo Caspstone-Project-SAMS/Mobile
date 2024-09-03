@@ -64,7 +64,7 @@ const login = createAsyncThunk(
           placement: 'top',
         });
 
-        console.log('hi error here ', error);
+        console.log('hi error here ', JSON.stringify(error));
         throw new AxiosError(error.response);
       }
       return rejectWithValue(error.message.data);

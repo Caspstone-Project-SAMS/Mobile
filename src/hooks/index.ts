@@ -1,4 +1,4 @@
-const server = 'http://34.81.223.233/api';
+const server = 'https://sams-project.com/api';
 
 //Auth
 export const USER_AUTH_API = `${server}/Auth`;
@@ -12,6 +12,9 @@ export const SEMESTER_API = `${server}/Semester`;
 
 //Student
 export const STUDENT_API = `${server}/Student`;
+
+//Class
+export const CLASS_API = `${server}/Class`;
 
 //Module
 export const MODULE_API = `${server}/Module`;
