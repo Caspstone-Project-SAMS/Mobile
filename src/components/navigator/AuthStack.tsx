@@ -17,6 +17,7 @@ import { Text } from 'react-native-paper';
 import { TouchableOpacity, View } from 'react-native';
 import CustomBtn from '../global/CustomBtn';
 import { Toast } from 'react-native-toast-notifications';
+import ClassInfo from '../../screens/class/ClassInfo';
 
 const AuthStack = () => {
     const Stack = createStackNavigator();
@@ -42,7 +43,7 @@ const AuthStack = () => {
         <ErrorBoundary
             FallbackComponent={Fallback}
             onReset={(details) => {
-                // Reset the state of your app so the error doesn't happen again
+                // Reset the app state so the error doesn't happen again
                 navigation.navigate("LOGIN")
             }}
         >
@@ -58,6 +59,8 @@ const AuthStack = () => {
                 <Stack.Screen name="ChangePassword" component={ChangePassword} />
                 <Stack.Screen name="PrivatePolicy" component={PrivatePolicy} />
                 <Stack.Screen name="AccountProfile" component={AccountProfile} />
+                {/* Class */}
+                <Stack.Screen name="ClassInfo" component={ClassInfo} />
                 {/* Module */}
                 <Stack.Screen name="SetUpModule" component={SetUpModule} />
                 <Stack.Screen name="ConfigModule" component={ConfigModule} />

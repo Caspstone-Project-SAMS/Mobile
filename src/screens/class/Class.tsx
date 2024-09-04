@@ -105,7 +105,7 @@ const Class = ({ navigation }) => {
                     value={searchQuery}
                     style={styles.searchBar}
                     onFocus={() => setIsOpenActions(true)}
-                    onBlur={() => setIsOpenActions(false)}
+                // onBlur={() => setIsOpenActions(false)}
                 />
                 {
                     isOpenActions &&
@@ -120,8 +120,8 @@ const Class = ({ navigation }) => {
                                                 style={{ marginBottom: 2 }}
                                                 onPress={() => {
                                                     setSelectedSemester(item);
-                                                    // Keyboard.dismiss();
-                                                    // setIsOpenActions(false);
+                                                    Keyboard.dismiss();
+                                                    setIsOpenActions(false);
                                                 }}
                                             >
                                                 <Text style={{ width: 'auto', paddingVertical: 6 }}>
@@ -136,8 +136,8 @@ const Class = ({ navigation }) => {
                                                 style={{ paddingVertical: 6 }}
                                                 onPress={() => {
                                                     setSelectedSemester(item);
-                                                    // Keyboard.dismiss();
-                                                    // setIsOpenActions(false);
+                                                    Keyboard.dismiss();
+                                                    setIsOpenActions(false);
                                                 }}
                                             >
                                                 <Text>
@@ -154,52 +154,75 @@ const Class = ({ navigation }) => {
             </View>
 
             <TouchableWithoutFeedback
-            // onPress={() => {
-            //     console.log("hey");
-            //     Keyboard.dismiss()
-            // }}
+                onPress={() => {
+                    Keyboard.dismiss();
+                    setIsOpenActions(false);
+                }}
             >
-                <ScrollView style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Text style={{ marginBottom: 15, fontSize: 18, fontFamily: 'Lexend-Regular' }}>Class:</Text>
-                        <TextInput
-                            mode="outlined"
-                            placeholder="Search.."
-                            style={[styles.searchBox, styles.shadow]}
-                            right={<TextInput.Icon
-                                icon={'magnify'}
-                            />}
-                            onChangeText={val => {
-                                setSearchClass(val);
-                            }}
-                        />
-                    </View>
-                    <View style={{ gap: 16, marginTop: 14 }}>
-                        {
-                            classList.length > 0 ? classList.map((item, index) => {
-                                return (
-                                    <TouchableOpacity key={`class_${index}`}
-                                        onPress={() => { console.log("Clicking here"); }}
-                                    >
-                                        <ClassItem
-                                            classCode={item.classCode}
-                                            roomName={item.room.roomName}
-                                            subject={`${item.subject.subjectCode} - ${item.subject.subjectName}`}
-                                        />
-                                    </TouchableOpacity>
+                <View style={{ flex: 1 }}>
+                    <ScrollView style={{ flex: 1 }}>
+                        <View style={styles.accessibilityBar}>
+                            <Text style={{ marginBottom: 15, fontSize: 18, fontFamily: 'Lexend-Regular' }}>Class:</Text>
+                            <TextInput
+                                mode="outlined"
+                                placeholder="Search.."
+                                style={[styles.searchBox, styles.shadow]}
+                                right={<TextInput.Icon
+                                    icon={searchClass.length > 0 ? ('close') : ('magnify')}
+                                    onPress={() => {
+                                        if (searchClass.length > 0) {
+                                            setSearchClass('')
+                                        }
+                                    }}
+                                />}
+                                value={searchClass}
+                                onChangeText={val => {
+                                    setSearchClass(val);
+                                }}
+                            />
+                        </View>
+                        <View style={{ gap: 16, marginTop: 14 }}>
+                            {
+                                classList.length > 0 ? classList.map((item, index) => {
+                                    if (searchClass.length > 0
+                                        && item.classCode.toLowerCase().includes(searchClass.toLowerCase())) {
+                                        return (
+                                            <TouchableOpacity key={`class_${index}`}
+                                                onPress={() => { navigation.navigate('ClassInfo', { classData: item }) }}
+                                            >
+                                                <ClassItem
+                                                    classCode={item.classCode}
+                                                    roomName={item.room.roomName}
+                                                    subject={`${item.subject.subjectCode} - ${item.subject.subjectName}`}
+                                                />
+                                            </TouchableOpacity>
+                                        )
+                                    } else if (searchClass.length === 0) {
+                                        return (
+                                            <TouchableOpacity key={`class_${index}`}
+                                                onPress={() => { navigation.navigate('ClassInfo', { classData: item }) }}
+                                            >
+                                                <ClassItem
+                                                    classCode={item.classCode}
+                                                    roomName={item.room.roomName}
+                                                    subject={`${item.subject.subjectCode} - ${item.subject.subjectName}`}
+                                                />
+                                            </TouchableOpacity>
+                                        )
+                                    }
+                                }
+                                ) : (
+                                    <View style={GLOBAL_STYLES.verticalBetweenCenter}>
+                                        <Image
+                                            style={{ width: 100, height: 100 }}
+                                            source={require('../../assets/imgs/nodata_black.png')} alt='No data image' />
+                                        <Text>No Class Found</Text>
+                                    </View>
                                 )
                             }
-                            ) : (
-                                <View style={GLOBAL_STYLES.verticalBetweenCenter}>
-                                    <Image
-                                        style={{ width: 100, height: 100 }}
-                                        source={require('../../assets/imgs/nodata_black.png')} alt='No data image' />
-                                    <Text>No Class Found</Text>
-                                </View>
-                            )
-                        }
-                    </View>
-                </ScrollView>
+                        </View>
+                    </ScrollView>
+                </View>
             </TouchableWithoutFeedback>
         </View>
     )
@@ -215,6 +238,11 @@ const styles = StyleSheet.create({
     searchContainer: {
         position: 'relative',
         height: 'auto'
+    },
+    accessibilityBar: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between'
     },
     searchBar: {
         marginBottom: 20,
