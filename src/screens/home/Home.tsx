@@ -248,6 +248,47 @@ const Home = () => {
     }, [])
   );
 
+  const tempData = {
+    "classID": 29,
+    "classCode": "SE1837-IoT102t",
+    "classStatus": 1,
+    "slotType": {
+      "slotTypeID": 2,
+      "typeName": "Slot type 2",
+      "description": "Each slot has 2 sessions",
+      "status": 1,
+      "sessionCount": 2
+    },
+    "semester": {
+      "semesterID": 5,
+      "semesterCode": "SU24",
+      "semesterStatus": 3,
+      "startDate": "2024-06-01",
+      "endDate": "2024-08-30"
+    },
+    "room": {
+      "roomID": 34,
+      "roomName": "304",
+      "roomDescription": "P.304",
+      "roomStatus": 1
+    },
+    "subject": {
+      "subjectID": 14,
+      "subjectCode": "IOT102",
+      "subjectName": "Internet of Things",
+      "subjectStatus": 1
+    },
+    "lecturer": {
+      "id": "a829c0b5-78dc-4194-a424-08dc8640e68a",
+      "displayName": "Nguyễn Khôi",
+      "avatar": "https://res.cloudinary.com/dd9f1tyca/image/upload/v1725338558/qacly7owyvkymmtk7hbg.png",
+      "email": "email@gmail.com",
+      "department": null
+    },
+    "students": [],
+    "schedules": []
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -278,6 +319,7 @@ const Home = () => {
             activeOpacity={0.4}
             style={styles.bellNotification}
             onPress={() => {
+              navigation.navigate('ClassInfo', { classData: tempData })
               //  navigation.navigate('ScheduleSwipe') 
               // setWifiPermission(grantedPermission())
             }}

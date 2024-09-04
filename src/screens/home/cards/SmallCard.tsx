@@ -31,7 +31,11 @@ const SmallCard: React.FC<props> = ({ detail, subDetail, titleIcon, titleTxt, is
                 isUpcoming ? (
                     <TouchableOpacity
                         style={styles.detail}
-                        onPress={() => navigation.navigate('ClassDetail', { schedule: upComingSchedule })}
+                        onPress={() => {
+                            if (upComingSchedule) {
+                                navigation.navigate('ClassDetail', { schedule: upComingSchedule })
+                            }
+                        }}
                     >
                         <Text
                             numberOfLines={1}

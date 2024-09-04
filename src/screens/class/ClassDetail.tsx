@@ -219,7 +219,7 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                 </View>
                 <View style={styles.dashboardCardsCtn}>
                     <View style={styles.dashboardRow}>
-                        <DashboardCard label='Attendance' detail={dashBoard.attendance} theme='info' key={'1'} />
+                        <DashboardCard label='Attendants' detail={dashBoard.attendance} theme='info' key={'1'} />
                         <DashboardCard label='Attended' detail={dashBoard.attended} theme='success' key={'2'} />
                     </View>
                     <View style={styles.dashboardRow}>
