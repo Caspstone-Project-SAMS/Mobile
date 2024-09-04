@@ -12,8 +12,17 @@ export interface ClassModel {
   room: Room;
   subject: Subject;
   lecturer: Lecturer;
-  students: any[];
-  schedules: any[];
+  students?: Student[];
+  schedules?: any[];
+}
+
+export interface Student {
+  id: string;
+  displayName: string;
+  avatar?: string;
+  email: string;
+  studentCode: string;
+  absencePercentage: number;
 }
 
 interface SlotType {

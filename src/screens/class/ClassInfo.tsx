@@ -1,5 +1,5 @@
-import { Image, ImageSourcePropType, StyleSheet, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import { Image, ImageSourcePropType, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
 import { Avatar, Card, IconButton, Text } from 'react-native-paper'
 import Title from '../../components/Title'
 import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
@@ -8,14 +8,17 @@ import { CartesianChart, Line, Pie, PolarChart, useChartPressState } from "victo
 import { SharedValue } from 'react-native-reanimated'
 import { Circle } from '@shopify/react-native-skia'
 import StudentCard from './cards/StudentCard'
+import { ClassModel, Student } from '../../models/Class'
+import { ClassService } from '../../hooks/Class'
 
 
 type SectionChip = {
     label: string,
     icon: ImageSourcePropType,
-    info: string
+    info: string,
+    infoTxtColor?: string,
 }
-const SectionDetailChip: React.FC<SectionChip> = ({ icon, info, label }) => {
+const SectionDetailChip: React.FC<SectionChip> = ({ icon, info, label, infoTxtColor }) => {
     return (
         <View style={styles.detailSection}>
             <Text style={{ color: FONT_COLORS.blurFontColor }}>{label}</Text>
@@ -24,7 +27,7 @@ const SectionDetailChip: React.FC<SectionChip> = ({ icon, info, label }) => {
                     source={icon}
                     style={{ width: 24, height: 24 }}
                 />
-                <Text>{info}</Text>
+                <Text style={infoTxtColor ? { color: infoTxtColor } : {}}>{info}</Text>
             </View>
         </View>
     )
@@ -41,7 +44,7 @@ function generateRandomColor(): string {
 const DATA = (numberPoints = 5) =>
     Array.from({ length: numberPoints }, (_, index) => ({
         value: randomNumber(),
-        color: generateRandomColor(),
+        color: index == 0 ? 'yellow' : index == 1 ? 'green' : 'red',
         label: `Label ${index + 1}`,
     }));
 
@@ -53,9 +56,27 @@ const ClassInfo = ({ route, navigation }) => {
     const [insetColor, setInsetColor] = useState<string>("#fafafa");
 
     const [selectedView, setSelectedView] = useState<'student' | 'schedule'>('student');
+    const [classInfo, setClassInfo] = useState<ClassModel>();
+    const [studentList, setStudentList] = useState<Student[]>([]);
+
+    useEffect(() => {
+        const promise = ClassService.getClassByID(classID);
+        promise.then(data => {
+            setClassInfo(data);
+            if (data.students) {
+                setStudentList(data.students)
+            }
+        }).catch(err => {
+            console.log("Err occured when loading class info", JSON.stringify(err));
+        })
+    }, [])
+
+    useEffect(() => {
+        console.log("Student list has change ", studentList);
+    }, [studentList])
 
     return (
-        <View style={styles.container}>
+        <ScrollView style={styles.container}>
             <Title title={`${classCode}`} navigation={navigation} />
             <View>
                 <Text style={styles.label}># Detail</Text>
@@ -63,28 +84,29 @@ const ClassInfo = ({ route, navigation }) => {
                     <SectionDetailChip
                         label='Student number:'
                         icon={require('../../assets/imgs/student_raising_hand.png')}
-                        info='28'
+                        info={studentList.length > 0 ? studentList.length.toString() : '0'}
                         key={`studentNum`}
                     />
 
                     <SectionDetailChip
                         label='Class status:'
                         icon={require('../../assets/icons/status_icon.png')}
-                        info='On Going'
+                        info={classInfo ? (classInfo.classStatus === 1 ? 'On-going' : 'Unactive') : ''}
+                        infoTxtColor={classInfo ? (classInfo.classStatus === 1 ? 'green' : 'red') : ''}
                         key={`classStatus`}
                     />
 
                     <SectionDetailChip
                         label='Subject:'
                         icon={require('../../assets/icons/book_icon.png')}
-                        info='IOT102T'
+                        info={classInfo ? classInfo.subject.subjectCode : ''}
                         key={`classSubject`}
                     />
 
                     <SectionDetailChip
                         label='Semester:'
                         icon={require('../../assets/icons/semester_icon.png')}
-                        info='SU24'
+                        info={classInfo ? classInfo.semester.semesterCode : ''}
                         key={`classSemester`}
                     />
                 </View>
@@ -92,7 +114,11 @@ const ClassInfo = ({ route, navigation }) => {
 
             <View style={[GLOBAL_STYLES.horizontalBetweenCenter, { marginTop: 20 }]}>
                 <Text style={styles.label}># Attendance report</Text>
-                <TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => {
+                        // ClassService.downloadReportExcel(classID, classCode)
+                    }}
+                >
                     <Text style={styles.linkTxt}>Download report</Text>
                 </TouchableOpacity>
             </View>
@@ -178,10 +204,23 @@ const ClassInfo = ({ route, navigation }) => {
                 </View>
 
                 <View style={styles.studentListCtn}>
-                    <StudentCard name='Nguyen Duc' studentCode='SE161458' absentPercentage={20} avatar='' email='ducnhhse161458@fpt.edu.vn' />
+                    {
+                        studentList.length > 0 && (
+                            studentList.map((item, i) => (
+                                <StudentCard
+                                    key={`student_${i}`}
+                                    name={item.displayName}
+                                    studentCode={item.studentCode}
+                                    absentPercentage={20}
+                                    avatar={item.avatar}
+                                    email={item.email}
+                                />
+                            ))
+                        )
+                    }
                 </View>
             </View>
-        </View>
+        </ScrollView>
     )
 }
 

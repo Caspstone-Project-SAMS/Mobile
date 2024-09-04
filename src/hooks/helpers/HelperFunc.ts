@@ -39,10 +39,24 @@ const isNumber = (str: any) => {
   return false;
 };
 
+const downloadFile = (blobFile, fileName: string) => {
+  const href = URL.createObjectURL(blobFile);
+
+  const link = document.createElement('a');
+  link.href = href;
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+
+  document.body.removeChild(link);
+  URL.revokeObjectURL(href);
+};
+
 export const HelperService = {
   getWeekFromDate,
   removeDuplicates,
   emailChecker,
   randomDelay,
   isNumber,
+  downloadFile,
 };

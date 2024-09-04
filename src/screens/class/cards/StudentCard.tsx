@@ -25,7 +25,7 @@ const StudentCard: React.FC<props> = ({ avatar, name, studentCode, absentPercent
                 />
                 <View style={styles.userInfo}>
                     <Text style={styles.userName}>{name}</Text>
-                    <Text style={styles.blurTxt}>{email}</Text>
+                    <Text style={[styles.blurTxt, { fontSize: 12 }]}>{email}</Text>
                 </View>
             </View>
             <View style={{ gap: 5, width: '28%' }}>
