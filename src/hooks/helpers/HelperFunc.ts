@@ -30,9 +30,19 @@ const emailChecker = (email: string): boolean => {
 
 const randomDelay = () => Math.floor(Math.random() * 550) + 200;
 
+//Not receive string, spaces
+const isNumber = (str: any) => {
+  // !isNaN(str)
+  if (typeof str === 'string' && str.trim() !== '') {
+    return !isNaN(str) && Number.isInteger(Number(str));
+  }
+  return false;
+};
+
 export const HelperService = {
   getWeekFromDate,
   removeDuplicates,
   emailChecker,
   randomDelay,
+  isNumber,
 };

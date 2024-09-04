@@ -1,273 +1,62 @@
 import React, { useEffect, useState } from 'react'
-import { COLORS } from '../../assets/styles/variables'
+import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
-import { View, StyleSheet, TouchableOpacity, ScrollView, PermissionsAndroid } from 'react-native'
-import { ActivityIndicator, HelperText, Modal, Portal, Text, TextInput } from 'react-native-paper'
-import WifiManager, { WifiEntry } from 'react-native-wifi-reborn'
-import Entypo from 'react-native-vector-icons/Entypo';
-import { Toast } from 'react-native-toast-notifications';
+import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native'
+import { Text } from 'react-native-paper'
 
-import Wifi from './Wifi'
-import CustomBtn from '../../components/global/CustomBtn'
-import WifiItem from '../../components/wifi/WifiItem'
-import { ModuleService } from '../../hooks/Module'
+import Ionicon from 'react-native-vector-icons/Ionicons';
 
-const Module = () => {
-    const [selectedView, setSelectedView] = useState<'wifi' | 'module'>('wifi')
-    const [currentWifi, setCurrentWifi] = useState<string>('')
-    const [isConnectedModule, setIsConnectedModule] = useState<boolean>(false)
-
-    //Setup module
-    const [visible, setVisible] = React.useState(false);
-    const [selectedWifi, setSelectedWifi] = useState<string>('Select wifi to setup')
-    const [onLoading, setOnLoading] = useState<boolean>(false);
-    const [onFetchLoading, setOnFetchLoading] = useState<boolean>(false);
-    const [onClick, setOnClick] = useState<boolean>(false);
-    const [wifiList, setWifiList] = useState<WifiEntry[]>([]);
-    const [passwordForModule, setPasswordForModule] = useState<string>('');
-    const [secureTextEntry, setSecureTextEntry] = useState(true);
-    const toggleSecureEntry = () => {
-        setSecureTextEntry((prev) => !prev);
-    };
-    const hideModal = () => setVisible(false);
-
-    const [wifiPermission, setWifiPermission] = useState();
-
-
-    //Get wifi
-    const grantedPermission = async () => {
-        const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-            {
-                title: 'Location permission is required for WiFi connections',
-                message:
-                    'SAMS application needs location permission as this is required  ' +
-                    'to scan for wifi networks.',
-                buttonNegative: 'DENY',
-                buttonPositive: 'ALLOW',
-            },
-        )
-        return granted;
-    }
-    const hasErrors = () => {
-        if (passwordForModule.length === 0) return false
-        return !(passwordForModule.length >= 8);
-    };
-
-    useEffect(() => {
-        const permission = grantedPermission();
-        permission.then(info => setWifiPermission(info)).catch(err => "Got err here bro")
-    }, [])
-
-    useEffect(() => {
-        if (wifiPermission === PermissionsAndroid.RESULTS.GRANTED) {
-            const getWifiOnPress = async () => {
-                const wifiListPromise = WifiManager.loadWifiList();
-                setOnLoading(true);
-                wifiListPromise.then(list => {
-                    setTimeout(() => {
-                        setOnLoading(false);
-                        setWifiList(list)
-                        // list.map(item => {
-                        //     console.log('wifi item', item);
-                        // })
-                    }, 1200)
-                }).catch(err => {
-                    setOnLoading(false);
-                    Toast.show('Wifi and location require on!', { type: 'warning', placement: 'top', duration: 1200 })
-                })
-            }
-
-            getWifiOnPress();
-        } else {
-            // toast.show('App require wifi and location access permission to use this function', { type: 'danger', placement: 'top', duration: 2000 })
-            console.log("Wifi denied");
-        }
-    }, [onClick, wifiPermission])
-
-
-    const getCurrentWifiSSID = async () => {
-        const ssid = await WifiManager.getCurrentWifiSSID()
-        setCurrentWifi(ssid)
-    }
-    getCurrentWifiSSID();
-
-    const handleSetUpModule = () => {
-        if (selectedWifi === 'Select wifi to setup' || passwordForModule.length < 8) {
-            Toast.show(
-                'Please select wifi and enter password!',
-                { type: "warning", placement: 'top' }
-            )
-        } else {
-            const promise = ModuleService.setUpWifi(selectedWifi, passwordForModule);
-            setOnFetchLoading(true);
-            // Toast.show(`Setup ${selectedWifi} - ${passwordForModule}`, { type: 'success', placement: 'top' })
-
-            promise.then(data => {
-                setOnFetchLoading(false);
-                Toast.show(`Setup ${selectedWifi} for module successfully`, { type: 'success', placement: 'top' })
-                setSelectedView('wifi');
-            }).catch(err => {
-                setOnFetchLoading(false);
-                Toast.show('Unknow errors occured, please try again.', { type: 'danger', placement: 'top' })
-            })
-        }
-    }
-
+//@ts-ignore
+const Module = ({ navigation }) => {
     return (
         <ScrollView style={styles.container}>
-            <Text style={GLOBAL_STYLES.titleLabel}>Module Management</Text>
+            <Text style={GLOBAL_STYLES.titleLabel}            >
+                Module Management
+            </Text>
 
-            <View style={styles.titleContainer}>
-                <Text>Wifi Connected: {currentWifi}</Text>
-                <Text>Module Connected: No</Text>
-            </View>
-            <View
-                style={[GLOBAL_STYLES.horizontalDivider, { marginVertical: 10 }]}
-            ></View>
-            <View style={{ alignSelf: 'flex-end' }}>
-                <View style={styles.filterListCtn}>
-                    <View style={styles.filterBtn}>
-                        <TouchableOpacity
-                            onPress={() => setSelectedView('wifi')}
-                        >
-                            <Text style={[styles.filterBtnTxt,
-                            selectedView === 'wifi' && styles.onSelectedBtn
-                            ]}>Wi-Fi</Text>
-                        </TouchableOpacity>
+            <TouchableOpacity
+                onPress={() => navigation.navigate('ConfigModule')}
+                style={{ marginTop: 15 }}
+            >
+                <View style={styles.moduleCard}>
+                    <View style={styles.leftCard}>
+                        <Text style={styles.cardTitle}>Config module</Text>
+                        <Text style={styles.cardDescription}>Adjust auto prepare time, sounds,...</Text>
                     </View>
-                    <View style={styles.filterBtn}>
-                        <TouchableOpacity
-                            onPress={() => {
-                                // if(isConnectedModule){
-                                setSelectedView('module')
-                                // } else{
-                                //     Toast.show('Please connect to module first')
-                                // }
-                            }}
-                        >
-                            <Text style={[styles.filterBtnTxt,
-                            selectedView === 'module' && styles.onSelectedBtn
-                            ]}>Set-up Module</Text>
-                        </TouchableOpacity>
+                    <View style={styles.rightCard}>
+                        {/* config_icon.png */}
+                        <View>
+                            <Image
+                                style={styles.cardIcon}
+                                source={require('../../assets/icons/config_icon.png')}
+                            />
+                        </View>
+                        <Ionicon name='arrow-forward-outline' size={25} style={{ paddingRight: 6 }} />
                     </View>
                 </View>
-            </View>
+            </TouchableOpacity>
 
-            <View style={{ marginBottom: 40, flex: 1 }}>
-                {
-                    selectedView === 'wifi' ? (
-                        <Wifi />
-                    ) : (
-                        <>
-                            <View style={styles.setUpModuleSection}>
-                                <View style={GLOBAL_STYLES.horizontalBetweenCenter}>
-                                    <Text>Set Up Module</Text>
-                                    {
-                                        onFetchLoading && (
-                                            <ActivityIndicator animating={true} color={COLORS.greenSystem} />
-                                        )
-                                    }
-                                </View>
-                                <View style={styles.selectWifiCtn}>
-                                    <TextInput
-                                        disabled
-                                        value={selectedWifi}
-                                        style={{ flex: 1 }}
-                                    />
-                                    <TouchableOpacity
-                                        onPress={() => setVisible(true)}
-                                    >
-                                        <Entypo name='chevron-thin-down' size={20} />
-                                    </TouchableOpacity>
-                                </View>
+            <TouchableOpacity
+                onPress={() => navigation.navigate('SetUpModule')}
+                style={{ marginTop: 25 }}
+            >
+                <View style={styles.moduleCard}>
+                    <View style={styles.leftCard}>
+                        <Text style={styles.cardTitle}>Set up module wifi</Text>
+                        <Text style={styles.cardDescription}>Set up wifi and password for module connect to internet</Text>
+                    </View>
+                    <View style={styles.rightCard}>
+                        <View>
+                            <Image
+                                style={styles.cardIcon}
+                                source={require('../../assets/icons/wireless_icon.png')}
+                            />
+                        </View>
+                        <Ionicon name='arrow-forward-outline' size={25} style={{ paddingRight: 6 }} />
+                    </View>
+                </View>
+            </TouchableOpacity>
 
-                                <View>
-                                    <TextInput
-                                        style={{
-                                            flex: 1,
-                                            backgroundColor: '#FFF',
-                                        }}
-                                        mode="outlined"
-                                        placeholder='Enter wifi password'
-                                        onChangeText={pass => setPasswordForModule(pass)}
-                                        secureTextEntry={secureTextEntry}
-                                        outlineStyle={{
-                                            borderRadius: 0,
-                                            borderTopWidth: 0,
-                                            borderLeftWidth: 0,
-                                            borderRightWidth: 0,
-                                        }}
-                                        right={
-                                            <TextInput.Icon
-                                                icon={secureTextEntry ? 'eye-off-outline' : 'eye-outline'}
-                                                color={'black'}
-                                                onPress={toggleSecureEntry}
-                                            />
-                                        }
-                                    />
-                                    <HelperText type="error" visible={hasErrors()}>
-                                        Password must contains at least 8 characters
-                                    </HelperText>
-                                </View>
-                                <TouchableOpacity
-                                    disabled={onFetchLoading}
-                                    style={{ marginTop: 15 }}
-                                    onPress={() => handleSetUpModule()}
-                                >
-                                    <CustomBtn text='Save'
-                                        customStyle={
-                                            onFetchLoading
-                                                ? { backgroundColor: COLORS.grayLight }
-                                                : { backgroundColor: COLORS.skyBlue }
-                                        }
-                                    />
-                                </TouchableOpacity>
-                            </View>
-                        </>
-                    )
-                }
-                <Portal>
-                    <Modal visible={visible} onDismiss={hideModal}
-                        contentContainerStyle={{
-                            backgroundColor: 'white', padding: 20
-                        }}
-                    >
-                        <ScrollView style={{ height: '50%' }}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 }}>
-                                <Text>WI-FI nearby</Text>
-                                {onLoading ? (
-                                    <ActivityIndicator animating={true} color={COLORS.greenSystem} />
-                                ) : (
-                                    <TouchableOpacity
-                                        onPress={() => {
-                                            setOnClick(!onClick)
-                                        }}
-                                    >
-                                        <Text style={{ color: COLORS.greenSystem }}>Refresh</Text>
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                            <View style={styles.wifiListCtn}>
-                                {
-                                    wifiList.map((wifi, i) => (
-                                        <TouchableOpacity
-                                            key={`wifi_modal_${i}`}
-                                            onPress={() => {
-                                                console.log("selecting ", wifi.SSID);
-                                                setSelectedWifi(wifi.SSID);
-                                                setVisible(!visible);
-                                            }}
-                                        >
-                                            <WifiItem {...wifi} />
-                                        </TouchableOpacity>
-                                    ))
-                                }
-                            </View>
-                        </ScrollView>
-                    </Modal>
-                </Portal>
-            </View>
         </ScrollView>
     )
 }
@@ -279,57 +68,37 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         backgroundColor: '#FFF',
     },
-    titleContainer: {
-        marginTop: 12,
-        marginBottom: 8,
-        alignItems: 'flex-end'
-    },
-    filterListCtn: {
-        marginBottom: 20,
-        borderRadius: 10,
+    moduleCard: {
+        borderColor: COLORS.borderColor,
+        borderWidth: 1,
+        borderRadius: 4,
         flexDirection: 'row',
-        backgroundColor: '#F4F4F4',
-        alignSelf: 'flex-start',
+        justifyContent: 'space-between',
     },
-    filterBtn: {
-        flex: 1,
+    leftCard: {
+        width: '65%',
+        gap: 12,
+        padding: 16
     },
-    filterBtnTxt: {
-        textAlign: 'center',
-        paddingVertical: 16,
-        fontSize: 15,
-        borderRadius: 10
+    rightCard: {
+        width: '35%',
+        padding: 10,
+        gap: 15,
+        alignItems: 'flex-end',
+        justifyContent: 'space-between'
     },
-    onSelectedBtn: {
-        backgroundColor: COLORS.skyBlue,
-        color: '#FFF'
+    cardTitle: {
+        fontSize: 18,
+        fontFamily: 'Lexend-Regular'
     },
-
-    //Setup module section
-    setUpModuleSection: {
-        flex: 1,
+    cardDescription: {
+        fontSize: 14,
+        color: FONT_COLORS.blurFontColor
     },
-    customInput: {
-        flex: 1,
-        borderTopWidth: 0,
-        borderLeftWidth: 0,
-        borderRightWidth: 0,
-        borderRadius: 0
-    },
-
-    //modal
-
-    selectWifiCtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.skyBase,
-        paddingRight: 10
-    },
-    wifiListCtn: {
-        gap: 20
-    },
+    cardIcon: {
+        width: 55,
+        height: 55,
+    }
 })
 
 export default Module

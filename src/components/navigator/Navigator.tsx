@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/Store';
 
 const Navigator = () => {
-  const userInfo = useSelector((state: RootState) => state.auth.userDetail);
+  // const userInfo = useSelector((state: RootState) => state.auth.userDetail);
   const userRole = useSelector((state: RootState) => state.auth.userDetail?.result?.role.name)
 
   return (

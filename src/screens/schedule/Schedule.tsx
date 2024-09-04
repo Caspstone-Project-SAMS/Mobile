@@ -13,6 +13,7 @@ import { HelperService } from '../../hooks/helpers/HelperFunc';
 import { COLORS } from '../../assets/styles/variables';
 import { Card, Divider } from 'react-native-paper';
 import moment from 'moment';
+import { getAllSemester } from '../../redux/slice/Semester';
 
 moment.updateLocale('ko', {
     week: {
@@ -168,9 +169,12 @@ const Schedule = ({ navigation }) => {
 
     useEffect(() => {
         const week: Date[] = HelperService.getWeekFromDate(today)
-        if (userDetail && userDetail.id) {
+        if (userDetail && userDetail.id && semesters && semesters.length > 0) {
             const currentSemester = semesters.filter(item => item.semesterStatus === 2);
             dispatch(getScheduleByWeek({ lecturerID: userDetail.id, semesterID: currentSemester[0].semesterID, week: week }));
+        }
+        if (semesters && semesters.length === 0) {
+            dispatch(getAllSemester());
         }
     }, []);
 
@@ -183,7 +187,7 @@ const Schedule = ({ navigation }) => {
         if (selected) {
             const fmtDay = new Date(selected)
             const week: Date[] = HelperService.getWeekFromDate(fmtDay)
-            if (userDetail && userDetail.id) {
+            if (userDetail && userDetail.id && semesters && semesters.length > 0) {
                 const currentSemester = semesters.filter(item => item.semesterStatus === 2);
                 dispatch(getScheduleByWeek({ lecturerID: userDetail.id, semesterID: currentSemester[0].semesterID, week: week }));
             }
