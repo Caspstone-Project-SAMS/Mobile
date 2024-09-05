@@ -37,10 +37,26 @@ const forgotPassword = async (email: string) => {
   return response.data;
 };
 
+const changePassword = async (
+  userId: string,
+  oldPassword: string,
+  newPassword: string,
+  confirmPassword: string,
+) => {
+  const response = await axios.post(USER_AUTH_API + '/reset-password', {
+    userId,
+    oldPassword,
+    newPassword,
+    confirmPassword,
+  });
+  return response.data;
+};
+
 const AuthService = {
   login,
   getGGInfo,
   forgotPassword,
+  changePassword,
 };
 
 export default AuthService;
