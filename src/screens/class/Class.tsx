@@ -188,7 +188,10 @@ const Class = ({ navigation }) => {
                                         && item.classCode.toLowerCase().includes(searchClass.toLowerCase())) {
                                         return (
                                             <TouchableOpacity key={`class_${index}`}
-                                                onPress={() => { navigation.navigate('ClassInfo', { classData: item }) }}
+                                                onPress={() => {
+                                                    console.log("this class selected ", item.classID);
+                                                    navigation.navigate('ClassInfo', { classData: item })
+                                                }}
                                             >
                                                 <ClassItem
                                                     classCode={item.classCode}
@@ -200,7 +203,10 @@ const Class = ({ navigation }) => {
                                     } else if (searchClass.length === 0) {
                                         return (
                                             <TouchableOpacity key={`class_${index}`}
-                                                onPress={() => { navigation.navigate('ClassInfo', { classData: item }) }}
+                                                onPress={() => {
+                                                    console.log("this class selected ", item.classID);
+                                                    navigation.navigate('ClassInfo', { classData: item })
+                                                }}
                                             >
                                                 <ClassItem
                                                     classCode={item.classCode}

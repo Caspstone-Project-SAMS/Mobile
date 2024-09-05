@@ -52,6 +52,27 @@ const downloadFile = (blobFile, fileName: string) => {
   URL.revokeObjectURL(href);
 };
 
+const getPercentOnTotal = (item: number, total: number) => {
+  try {
+    const result = parseFloat(((item / total) * 100).toFixed(2));
+    if (!isNaN(result)) {
+      return result;
+    } else {
+      return 0;
+    }
+  } catch (error) {
+    console.log('An error occured when get percent on total');
+    return 0;
+  }
+};
+
+const generateRandomColor = (): string => {
+  // Generating a random number between 0 and 0xFFFFFF
+  const randomColor = Math.floor(Math.random() * 0xffffff);
+  // Converting the number to a hexadecimal string and padding with zeros
+  return `#${randomColor.toString(16).padStart(6, '0')}`;
+};
+
 export const HelperService = {
   getWeekFromDate,
   removeDuplicates,
@@ -59,4 +80,5 @@ export const HelperService = {
   randomDelay,
   isNumber,
   downloadFile,
+  getPercentOnTotal,
 };

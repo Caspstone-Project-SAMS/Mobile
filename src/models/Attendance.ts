@@ -16,3 +16,16 @@ export interface UpdateListAttendance {
   studentID: string;
   comments?: string;
 }
+
+export interface AttendanceReport {
+  studentCode: string;
+  studentName: string;
+  absencePercentage: number;
+  attendanceRecords: AttendanceRecord[];
+}
+
+interface AttendanceRecord {
+  date: string;
+  slotNumber: number;
+  status: number;
+}

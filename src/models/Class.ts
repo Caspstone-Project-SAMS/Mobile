@@ -1,3 +1,5 @@
+import { Slot } from './Slot';
+
 export interface ClassResponse {
   title: string;
   result: ClassModel[];
@@ -13,7 +15,7 @@ export interface ClassModel {
   subject: Subject;
   lecturer: Lecturer;
   students?: Student[];
-  schedules?: any[];
+  schedules?: ClassSchedule[];
 }
 
 export interface Student {
@@ -23,6 +25,16 @@ export interface Student {
   email: string;
   studentCode: string;
   absencePercentage: number;
+}
+
+export interface ClassSchedule {
+  scheduleID: number;
+  date: string;
+  dateOfWeek: number;
+  scheduleStatus: number;
+  attended: number;
+  slot: Slot;
+  room?: Room;
 }
 
 interface SlotType {

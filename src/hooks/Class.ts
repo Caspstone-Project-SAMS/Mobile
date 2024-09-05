@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { ATTENDANCE_API, CLASS_API } from '.';
 import { ClassModel, ClassResponse } from '../models/Class';
-import { HelperService } from './helpers/HelperFunc';
-import { Toast } from 'react-native-toast-notifications';
+import { AttendanceReport } from '../models/Attendance';
 
 const getClassBySemester = async (lecturerId: string, semesterId: number) => {
   const response = await axios.get(CLASS_API, {
@@ -22,37 +21,18 @@ const getClassByID = async (classID: number) => {
   return response.data.result as ClassModel;
 };
 
-const downloadReportExcel = async (classId: string, classCode: string) => {
-  try {
-    const response = await axios(`${ATTENDANCE_API}/attendance-report`, {
-      params: {
-        classId: classId,
-        isExport: true,
-      },
-      responseType: 'blob',
-    });
-
-    const blobFile = response.data;
-    HelperService.downloadFile(blobFile, `Class_Report_${classCode}`);
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      if (error.response.status === 400) {
-        Toast.show('No data available for export.', {
-          type: 'warning',
-          placement: 'top',
-        });
-      } else {
-        Toast.show('Unknown error occured', {
-          type: 'danger',
-          placement: 'top',
-        });
-      }
-    }
-  }
+const getClassAttendanceReport = async (classId: string) => {
+  const response = await axios.get(ATTENDANCE_API + '/attendance-report', {
+    params: {
+      classId,
+      isExport: false,
+    },
+  });
+  return response.data as AttendanceReport[];
 };
 
 export const ClassService = {
   getClassBySemester,
   getClassByID,
-  downloadReportExcel,
+  getClassAttendanceReport,
 };

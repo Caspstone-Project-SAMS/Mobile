@@ -14,6 +14,7 @@ import { COLORS } from '../../assets/styles/variables';
 import { Card, Divider } from 'react-native-paper';
 import moment from 'moment';
 import { getAllSemester } from '../../redux/slice/Semester';
+import { Semester } from '../../models/Semester';
 
 moment.updateLocale('ko', {
     week: {
@@ -29,7 +30,8 @@ type HeaderProps = {
     month: string,
     year: string,
     onChangeWeek: any,
-    onBackToday: any
+    onBackToday: any,
+    semesterCode?: string
 }
 
 const colorPalette = [
@@ -54,7 +56,9 @@ const statusTheme = {
     }
 }
 
-const CustomHeader: React.FC<HeaderProps> = ({ month, year, onChangeWeek, onBackToday }) => {
+const CustomHeader: React.FC<HeaderProps> = ({ month, year, onChangeWeek, onBackToday, semesterCode }) => {
+    const semesters = useSelector((state: RootState) => state.semester.data)
+
     return (
         <View style={styles.headerCtn}>
             <View style={styles.customHeader}>
@@ -65,8 +69,10 @@ const CustomHeader: React.FC<HeaderProps> = ({ month, year, onChangeWeek, onBack
                         <AntDesign name='calendar' size={32} color={'black'} />
                     </TouchableOpacity>
                     <Text style={styles.headerTxt}>
-                        <Text style={{ fontWeight: '500' }}>{month} {''}</Text>
-                        <Text>{year}</Text>
+                        <Text style={{ fontWeight: '500' }}
+                            onPress={() => console.log("Semester ", semesters)}
+                        >{month} {''}</Text>
+                        <Text>{year} {semesterCode && ` - (${semesterCode})`}</Text>
                     </Text>
                 </View>
 
@@ -92,6 +98,7 @@ const Schedule = ({ navigation }) => {
     const today = new Date();
     const [events, setEvents] = useState<any>();
     const [selected, setSelected] = useState(moment(today).format('YYYY-MM-DD'));
+    const [curSemester, setCurSemester] = useState<Semester | undefined>(undefined)
 
     //Merge every events on each date then format to show on calendar
     const formatScheduleData = (data: ScheduleResponse[]): FormattedSchedule => {
@@ -167,14 +174,36 @@ const Schedule = ({ navigation }) => {
         setSelected(moment(today).format('YYYY-MM-DD'));
     }
 
+    const filterSemesterByDay = (inputDate: string, semesters: Semester[]) => {
+        const targetDate = new Date(inputDate); //YYYY-MM-DD
+
+        for (const semester of semesters) {
+            const startDate = new Date(semester.startDate);
+            const endDate = new Date(semester.endDate);
+
+            if (targetDate >= startDate && targetDate <= endDate) {
+                return semester;
+            }
+        }
+
+        return null;
+    }
+
     useEffect(() => {
         const week: Date[] = HelperService.getWeekFromDate(today)
-        if (userDetail && userDetail.id && semesters && semesters.length > 0) {
-            const currentSemester = semesters.filter(item => item.semesterStatus === 2);
-            dispatch(getScheduleByWeek({ lecturerID: userDetail.id, semesterID: currentSemester[0].semesterID, week: week }));
-        }
         if (semesters && semesters.length === 0) {
             dispatch(getAllSemester());
+        }
+        if (userDetail && userDetail.id && semesters && semesters.length > 0) {
+            const today = moment().format('YYYY-MM-DD')
+            const currentSemester = filterSemesterByDay(today, semesters);
+            if (currentSemester) {
+                setCurSemester(currentSemester)
+                // const currentSemester = semesters.filter(item => item.semesterStatus === 2);
+                dispatch(getScheduleByWeek({ lecturerID: userDetail.id, semesterID: currentSemester.semesterID, week: week }));
+            } else {
+                setCurSemester(undefined)
+            }
         }
     }, []);
 
@@ -188,8 +217,14 @@ const Schedule = ({ navigation }) => {
             const fmtDay = new Date(selected)
             const week: Date[] = HelperService.getWeekFromDate(fmtDay)
             if (userDetail && userDetail.id && semesters && semesters.length > 0) {
-                const currentSemester = semesters.filter(item => item.semesterStatus === 2);
-                dispatch(getScheduleByWeek({ lecturerID: userDetail.id, semesterID: currentSemester[0].semesterID, week: week }));
+                const currentSemester = filterSemesterByDay(selected, semesters);
+                // const currentSemester = semesters.filter(item => item.semesterStatus === 2);
+                if (currentSemester) {
+                    setCurSemester(currentSemester)
+                    dispatch(getScheduleByWeek({ lecturerID: userDetail.id, semesterID: currentSemester.semesterID, week: week }));
+                } else {
+                    setCurSemester(undefined)
+                }
             }
             console.log("selecting day ", selected);
         }
@@ -206,6 +241,7 @@ const Schedule = ({ navigation }) => {
                 year={moment(selected, 'YYYY-MM-DD', true).format('YYYY')}
                 onChangeWeek={handleChangeWeek}
                 onBackToday={onBackToday}
+                semesterCode={curSemester && curSemester.semesterCode}
             />
             <Agenda
                 firstDay={1}

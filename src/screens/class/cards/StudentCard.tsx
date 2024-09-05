@@ -32,7 +32,7 @@ const StudentCard: React.FC<props> = ({ avatar, name, studentCode, absentPercent
                 <Text style={styles.activityStatus} >
                     {studentCode}
                 </Text>
-                <Text style={[styles.blurTxt, { textAlign: 'right' }]}>
+                <Text style={[styles.blurTxt, { textAlign: 'right' }, absentPercentage! >= 20 && { color: 'red' }]}>
                     Absent - {absentPercentage ? absentPercentage : 0}%
                 </Text>
             </View>

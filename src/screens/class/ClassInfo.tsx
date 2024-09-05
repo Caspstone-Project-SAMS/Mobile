@@ -1,16 +1,17 @@
 import { Image, ImageSourcePropType, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { Avatar, Card, IconButton, Text } from 'react-native-paper'
+import { Text } from 'react-native-paper'
 import Title from '../../components/Title'
 import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
-import { CartesianChart, Line, Pie, PolarChart, useChartPressState } from "victory-native";
-import { SharedValue } from 'react-native-reanimated'
-import { Circle } from '@shopify/react-native-skia'
+import { Pie, PolarChart } from "victory-native";
 import StudentCard from './cards/StudentCard'
-import { ClassModel, Student } from '../../models/Class'
+import { ClassModel, ClassSchedule, Student } from '../../models/Class'
 import { ClassService } from '../../hooks/Class'
-
+import { AttendanceReport } from '../../models/Attendance'
+import { HelperService } from '../../hooks/helpers/HelperFunc'
+import ScheduleCard from './cards/ScheduleCard'
+import NoData from '../../components/global/NoData'
 
 type SectionChip = {
     label: string,
@@ -18,6 +19,13 @@ type SectionChip = {
     info: string,
     infoTxtColor?: string,
 }
+
+type PieChartModel = {
+    value: number,
+    color: string,
+    label: string
+}
+
 const SectionDetailChip: React.FC<SectionChip> = ({ icon, info, label, infoTxtColor }) => {
     return (
         <View style={styles.detailSection}>
@@ -33,31 +41,63 @@ const SectionDetailChip: React.FC<SectionChip> = ({ icon, info, label, infoTxtCo
     )
 }
 
-const randomNumber = () => Math.floor(Math.random() * (50 - 25 + 1)) + 125;
-function generateRandomColor(): string {
-    // Generating a random number between 0 and 0xFFFFFF
-    const randomColor = Math.floor(Math.random() * 0xffffff);
-    // Converting the number to a hexadecimal string and padding with zeros
-    return `#${randomColor.toString(16).padStart(6, "0")}`;
-}
-
-const DATA = (numberPoints = 5) =>
-    Array.from({ length: numberPoints }, (_, index) => ({
-        value: randomNumber(),
-        color: index == 0 ? 'yellow' : index == 1 ? 'green' : 'red',
-        label: `Label ${index + 1}`,
-    }));
-
 const ClassInfo = ({ route, navigation }) => {
     const { classData: { classCode, classID, classStatus, room, semester, subject } } = route.params;
 
-    const [data, setData] = useState(DATA(3))
+    const [attendanceChart, setAttendanceChart] = useState<PieChartModel[]>([]);
     const [insetWidth, setInsetWidth] = useState(4);
     const [insetColor, setInsetColor] = useState<string>("#fafafa");
 
     const [selectedView, setSelectedView] = useState<'student' | 'schedule'>('student');
     const [classInfo, setClassInfo] = useState<ClassModel>();
     const [studentList, setStudentList] = useState<Student[]>([]);
+    const [scheduleList, setScheduleList] = useState<ClassSchedule[]>([]);
+    const [classReport, setClassReport] = useState<AttendanceReport[]>([]);
+
+    const calAttendanceChart = (data: AttendanceReport[]) => {
+        let totalRecord = 0;
+        let totalNotYet = 0;
+        let totalAttended = 0;
+        let totalAbsent = 0;
+        data.forEach(item => {
+            totalRecord += item.attendanceRecords.length;
+            item.attendanceRecords.forEach(record => {
+                switch (record.status) {
+                    case 0:
+                        totalNotYet += 1
+                        break;
+                    case 1:
+                        totalAttended += 1
+                        break;
+                    case 2:
+                        totalAbsent += 1
+                        break;
+                    default:
+                        break;
+                }
+            })
+        })
+
+        const fmtData: PieChartModel[] = [
+            {
+                value: HelperService.getPercentOnTotal(totalNotYet, totalRecord),
+                color: '#FFD21C',
+                label: 'Not yet Percent'
+            },
+            {
+                value: HelperService.getPercentOnTotal(totalAttended, totalRecord),
+                color: '#3ABE00',
+                label: 'Attended Percent'
+            },
+            {
+                value: HelperService.getPercentOnTotal(totalAbsent, totalRecord),
+                color: '#DC4437',
+                label: 'Absent Percent'
+            }
+        ]
+        // console.log("Total record ", totalRecord);
+        return fmtData;
+    }
 
     useEffect(() => {
         const promise = ClassService.getClassByID(classID);
@@ -66,14 +106,26 @@ const ClassInfo = ({ route, navigation }) => {
             if (data.students) {
                 setStudentList(data.students)
             }
+            if (data.schedules) {
+                setScheduleList(data.schedules)
+            }
         }).catch(err => {
             console.log("Err occured when loading class info", JSON.stringify(err));
         })
-    }, [])
 
-    useEffect(() => {
-        console.log("Student list has change ", studentList);
-    }, [studentList])
+        const promiseReport = ClassService.getClassAttendanceReport(classID);
+        promiseReport.then(data => {
+            // console.log("This is class report data *****", JSON.stringify(data));
+            setClassReport(data);
+            setAttendanceChart(calAttendanceChart(data));
+        }).catch(err => {
+            console.log("error occured when get class report");
+        })
+    }, []);
+
+    // useEffect(() => {
+    //     console.log("Student list has change ", studentList);
+    // }, [studentList])
 
     return (
         <ScrollView style={styles.container}>
@@ -126,7 +178,7 @@ const ClassInfo = ({ route, navigation }) => {
                 <View style={{ height: 115, width: '50%', position: 'relative' }}>
                     <PolarChart
                         containerStyle={{}}
-                        data={data}
+                        data={attendanceChart}
                         colorKey={"color"}
                         valueKey={"value"}
                         labelKey={"label"}
@@ -152,23 +204,23 @@ const ClassInfo = ({ route, navigation }) => {
                     <Text
                         style={{ position: 'absolute', left: '33%', top: '28%', textAlign: 'center', }}
                     >
-                        <Text style={{ fontSize: 20, fontFamily: 'Lexend-Regular' }}>28 {'\n'}</Text>
+                        <Text style={{ fontSize: 20, fontFamily: 'Lexend-Regular' }}>{classInfo ? classInfo.students?.length : '0'} {'\n'}</Text>
                         <Text>Students</Text>
                     </Text>
                 </View>
 
                 <View style={{ width: '50%' }}>
                     <View style={GLOBAL_STYLES.horizontalCenter}>
-                        <View style={[styles.block, { backgroundColor: 'yellow' }]}></View>
-                        <Text>Not Yet (27%)</Text>
+                        <View style={[styles.block, { backgroundColor: '#FFD21C' }]}></View>
+                        <Text>Not Yet ({attendanceChart && attendanceChart[0] ? attendanceChart[0].value : '0'}%)</Text>
                     </View>
                     <View style={GLOBAL_STYLES.horizontalCenter}>
-                        <View style={[styles.block, { backgroundColor: 'green' }]}></View>
-                        <Text>Attended (72%)</Text>
+                        <View style={[styles.block, { backgroundColor: '#3ABE00' }]}></View>
+                        <Text>Attended ({attendanceChart && attendanceChart[1] ? attendanceChart[1].value : '0'}%)</Text>
                     </View>
                     <View style={GLOBAL_STYLES.horizontalCenter}>
-                        <View style={[styles.block, { backgroundColor: 'red' }]}></View>
-                        <Text>Absent (1%)</Text>
+                        <View style={[styles.block, { backgroundColor: '#DC4437' }]}></View>
+                        <Text>Absent ({attendanceChart && attendanceChart[2] ? attendanceChart[2].value : '0'}%)</Text>
                     </View>
                 </View>
             </View>
@@ -203,22 +255,48 @@ const ClassInfo = ({ route, navigation }) => {
                     </View>
                 </View>
 
-                <View style={styles.studentListCtn}>
-                    {
-                        studentList.length > 0 && (
-                            studentList.map((item, i) => (
-                                <StudentCard
-                                    key={`student_${i}`}
-                                    name={item.displayName}
-                                    studentCode={item.studentCode}
-                                    absentPercentage={20}
-                                    avatar={item.avatar}
-                                    email={item.email}
-                                />
-                            ))
-                        )
-                    }
-                </View>
+                {
+                    selectedView === 'student' && (
+                        <View style={styles.studentListCtn}>
+                            {
+                                studentList.length > 0 ? (
+                                    studentList.map((item, i) => (
+                                        <StudentCard
+                                            key={`student_${i}`}
+                                            name={item.displayName}
+                                            studentCode={item.studentCode}
+                                            absentPercentage={19}
+                                            avatar={item.avatar}
+                                            email={item.email}
+                                        />
+                                    ))
+                                ) : (<NoData text='There is no student in this class' />)
+                            }
+                        </View>
+                    )
+                }
+
+                {
+                    selectedView === 'schedule' && (
+                        <View style={{ gap: 15, marginBottom: 35 }}>
+                            {
+                                scheduleList.length > 0 ? scheduleList.map((item, i) => (
+                                    <ScheduleCard
+                                        key={`schedule_${i}`}
+                                        date={item.date}
+                                        endTime={item.slot.endtime}
+                                        startTime={item.slot.startTime}
+                                        slotNumber={item.slot.slotNumber}
+                                        classSize={classInfo ? classInfo.students?.length : '0'}
+                                        studentAttended={undefined} //NOT FIX
+                                        status={item.scheduleStatus} //1: notyet, 2: ongoing, 3: finished
+                                        room={item.room ? item.room.roomName : (classInfo ? classInfo.room.roomName : '')}
+                                    />
+                                )) : (<NoData text='There is no any schedule in this class' />)
+                            }
+                        </View>
+                    )
+                }
             </View>
         </ScrollView>
     )
@@ -279,7 +357,7 @@ const styles = StyleSheet.create({
         color: '#FFF'
     },
     studentListCtn: {
-
+        marginBottom: 20
     },
     linkTxt: {
         color: COLORS.skyBase,
