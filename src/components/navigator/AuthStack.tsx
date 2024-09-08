@@ -48,6 +48,7 @@ const AuthStack = () => {
     useEffect(() => {
         console.log("Expo push token: ", expoPushToken);
         console.log("Notification: ", notification);
+        console.log("Data: ", data);
     }, [expoPushToken, notification])
 
     return (
