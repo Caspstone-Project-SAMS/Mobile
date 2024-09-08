@@ -109,13 +109,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.sams.android'
+    namespace "com.sams"
     defaultConfig {
-        applicationId 'com.sams.android'
+        applicationId "com.sams"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.2"
+        versionName "1.0"
     }
     signingConfigs {
         debug {
