@@ -2,7 +2,7 @@ import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } fro
 import React, { useEffect, useState } from 'react'
 import Title from '../../components/Title'
 import { COLORS, FONT_COLORS } from '../../assets/styles/variables';
-import { HelperText, MD3Colors, TextInput } from 'react-native-paper';
+import { ActivityIndicator, HelperText, MD3Colors, Modal, Portal, TextInput } from 'react-native-paper';
 import CustomBtn from '../../components/global/CustomBtn';
 import { Toast } from 'react-native-toast-notifications';
 import AuthService from '../../hooks/Auth';
@@ -11,9 +11,14 @@ import { RootState } from '../../redux/Store';
 import axios from 'axios';
 import useDispatch from '../../redux/UseDispatch';
 import { logout } from '../../redux/slice/Auth';
-import LoadingBlur from '../../components/global/LoadingBlur';
+import { HelperService } from '../../hooks/helpers/HelperFunc';
+// import LoadingBlur from '../../components/global/LoadingBlur';
 
 const { width } = Dimensions.get('window');
+
+const containerStyle = {
+    backgroundColor: 'white', padding: 20, marginHorizontal: 20
+};
 
 const ChangePassword = ({ navigation }) => {
     const userId = useSelector((state: RootState) => state.auth.userDetail?.result?.id)
@@ -35,24 +40,27 @@ const ChangePassword = ({ navigation }) => {
     const handleSubmit = () => {
         if (newPass === reNewPass) {
             if (newPass.length >= 5 && userId) {
+                const delayTime = HelperService.randomDelay()
                 setIsLoading(true);
-                const promise = AuthService.changePassword(userId, originalPass, newPass, reNewPass);
-                promise.then(data => {
-                    Toast.show('Change password successfully, please login again!', { type: 'success', placement: 'top' })
-                    dispatch(logout());
-                }).catch(err => {
-                    if (axios.isAxiosError(err) && err.response) {
-                        const errList = err.response.data.errors;
-                        if (errList && Array.isArray(errList)) {
-                            errList.forEach(log => {
-                                Toast.show(`${log}`, { type: 'danger', placement: 'top' })
-                            })
+                setTimeout(() => {
+                    const promise = AuthService.changePassword(userId, originalPass, newPass, reNewPass);
+                    promise.then(data => {
+                        Toast.show('Change password successfully, please login again!', { type: 'success', placement: 'top' })
+                        dispatch(logout());
+                    }).catch(err => {
+                        if (axios.isAxiosError(err) && err.response) {
+                            const errList = err.response.data.errors;
+                            if (errList && Array.isArray(errList)) {
+                                errList.forEach(log => {
+                                    Toast.show(`${log}`, { type: 'danger', placement: 'top' })
+                                })
+                            }
+                            console.log("This is err ", JSON.stringify(err));
                         }
-                        console.log("This is err ", JSON.stringify(err));
-                    }
-                }).finally(() => {
-                    setIsLoading(false);
-                })
+                    }).finally(() => {
+                        setIsLoading(false);
+                    })
+                }, delayTime);
             } else {
                 Toast.show('New Password must contains at least 5 characters', { type: 'warning', placement: 'top' })
             }
@@ -185,7 +193,14 @@ const ChangePassword = ({ navigation }) => {
                     <CustomBtn text='Change Password' />
                 </TouchableOpacity>
             </View>
-            {isLoading ? <LoadingBlur /> : ''}
+            {/* {isLoading ? <LoadingBlur /> : ''} */}
+            <Portal>
+                <Modal visible={isLoading} dismissable={false} contentContainerStyle={containerStyle}>
+                    <View style={styles.modal}>
+                        {isLoading && (<ActivityIndicator animating={true} color={COLORS.skyBlue} />)}
+                    </View>
+                </Modal>
+            </Portal>
         </ScrollView>
     )
 }
@@ -204,5 +219,9 @@ const styles = StyleSheet.create({
         width: 'auto',
         backgroundColor: '#f1f4ff',
         paddingHorizontal: 8,
+    },
+    modal: {
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 })
