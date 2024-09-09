@@ -12,6 +12,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../redux/Store";
 import { ParamListBase, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { usePushNotifications } from "../../../usePushNotification";
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState("");
@@ -20,6 +21,9 @@ const Login: React.FC = () => {
     const [isRemember, setIsRemember] = useState(false);
     const userInfo = useSelector((state: RootState) => state.auth);
 
+    const { expoPushToken, notification } = usePushNotifications()
+    const data = JSON.stringify(notification, undefined, 2);
+
     const dispatch = useDispatch()
     // const navigation = useNavigation()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
@@ -27,7 +31,11 @@ const Login: React.FC = () => {
 
     const [focusInput, setFocusInput] = useState<string | undefined>();
     const handleLogin = async () => {
-        await dispatch(login({ username: email, password, isRemember }));
+        if (expoPushToken) {
+            await dispatch(login({ username: email, password, isRemember, deviceToken: expoPushToken.data }));
+        } else {
+            await dispatch(login({ username: email, password, isRemember }));
+        }
     };
 
     const handleSendEmail = () => {
@@ -39,6 +47,14 @@ const Login: React.FC = () => {
 
         Linking.openURL(mailtoUrl).catch(err => console.error('Error:', err));
     };
+
+
+
+    useEffect(() => {
+        console.log("Expo push token: ", expoPushToken);
+        console.log("Notification: ", notification);
+        console.log("Data: ", data);
+    }, [expoPushToken, notification])
 
     // redirect to home if session valid - 7days
     useEffect(() => {

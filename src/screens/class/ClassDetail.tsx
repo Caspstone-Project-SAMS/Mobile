@@ -15,6 +15,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-na
 import CustomBtn from '../../components/global/CustomBtn'
 import { Toast } from 'react-native-toast-notifications'
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { ClassService } from '../../hooks/Class'
 
 const { width } = Dimensions.get('window');
 
@@ -25,14 +26,18 @@ type DashBoard = {
     pending: number,
 }
 
+interface AttendanceExtend extends Attendance {
+    absentPercentage: number
+}
+
 const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
     const { schedule: { classCode, classID, date, endTime, roomName, scheduleID, slotNumber, startTime, status, subjectCode } } = route.params
 
     const [searchVal, setSearchVal] = useState<string>('');
     const [selectedView, setSelectedView] = useState<'list' | 'pending' | 'absent'>('list');
     const [dashBoard, setDashBoard] = useState<DashBoard>({ attendance: 0, absent: 0, attended: 0, pending: 0 });
-    const [studentList, setStudentList] = useState<Attendance[]>([]);
-    const [filteredList, setFilteredList] = useState<Attendance[]>([]);
+    const [studentList, setStudentList] = useState<Attendance[] | AttendanceExtend[]>([]);
+    const [filteredList, setFilteredList] = useState<Attendance[] | AttendanceExtend[]>([]);
 
     const [isOpenActions, setIsOpenActions] = useState<boolean>(false);
     const [isAttendanceMode, setIsAttendanceMode] = useState<boolean>(false);
@@ -49,11 +54,37 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
 
     const getScheduleDetail = () => {
         const promise = AttendanceService.getAttendanceByScheduleId(scheduleID)
+        const promise2 = ClassService.getClassByID(classID)
         console.log("Getting schedule id ", scheduleID);
         promise.then(list => {
-            setDashBoard(dashboardCalculator(list));
-            setStudentList(list);
-            setFilteredList(list);
+            promise2.then(data => {
+
+                if (data.students && data.students?.length > 0) {
+                    const students = data.students;
+                    const modifiedList: AttendanceExtend[] = list.map(studentAttendance => {
+                        let result: AttendanceExtend = { ...studentAttendance, absentPercentage: 0 }
+
+                        students.forEach(student => {
+                            if (studentAttendance.studentID === student.id) {
+                                result = { ...result, absentPercentage: student.absencePercentage }
+                            }
+                        })
+                        return result
+                    })
+                    setDashBoard(dashboardCalculator(modifiedList));
+                    setStudentList(modifiedList);
+                    setFilteredList(modifiedList);
+                } else {
+                    setDashBoard(dashboardCalculator(list));
+                    setStudentList(list);
+                    setFilteredList(list);
+                }
+
+            }).catch(err => {
+                setDashBoard(dashboardCalculator(list));
+                setStudentList(list);
+                setFilteredList(list);
+            })
         }).catch(err => {
             console.log("Error when get schedule detail");
         })
@@ -84,7 +115,7 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
         if (isOpenActions) {
             setIsOpenActions(false);
         }
-        console.log("he;ppppppppp--------------", studentCode, '-', status);
+        // console.log("he;ppppppppp--------------", studentCode, '-', status);
         setFilteredList((prevList) => {
             return prevList.map(student => {
                 if (student.studentCode === studentCode) {
@@ -118,7 +149,7 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
         response.then(data => {
             setIsAttendanceMode(false);
             getScheduleDetail()
-            Toast.show('Update Attendance Successfully!')
+            Toast.show('Update Attendance Successfully!', { type: 'success', placement: 'top' })
         }).catch(err => {
             Toast.show('Something went wrong, please try again later');
         })
@@ -209,11 +240,11 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                                 </TouchableOpacity>
                             </Animated.View>
                         </View>
-                        <View style={{ position: 'relative' }}>
+                        {/* <View style={{ position: 'relative' }}>
                             <TouchableOpacity>
                                 <Image style={styles.titleIcon} source={require('../../assets/icons/filterIcon.png')} />
                             </TouchableOpacity>
-                        </View>
+                        </View> */}
                     </View>
 
                 </View>
@@ -308,7 +339,7 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                                                 studentCode={student.studentCode}
                                                 attendanceMode={isAttendanceMode}
                                                 handleUpdateStatus={handleUpdateStatus}
-                                                // absentPercentage={student.absentPercentage}
+                                                absentPercentage={student.absentPercentage ? student.absentPercentage : 0}
                                                 key={`student_${student.studentCode}`}
                                             />
                                         )

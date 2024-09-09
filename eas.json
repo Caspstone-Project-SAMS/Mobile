@@ -24,7 +24,8 @@
     "preview_release": {
       "android": {
         "buildType": "apk"
-      }
+      },
+      "autoIncrement": true
     },
     "production": {}
   },

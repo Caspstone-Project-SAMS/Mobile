@@ -48,15 +48,25 @@ const updateUser = createAsyncThunk(
 const login = createAsyncThunk(
   'auth/login',
   async (
-    arg: { username: string; password: string; isRemember: boolean },
+    arg: {
+      username: string;
+      password: string;
+      isRemember: boolean;
+      deviceToken?: string;
+    },
     { rejectWithValue },
   ) => {
-    const { username, password } = arg;
+    const { username, password, deviceToken } = arg;
     try {
-      const loginPromise = AuthService.login(username, password);
-      const result = await loginPromise;
-      // console.log('User result here ', result);
-      return result;
+      if (deviceToken) {
+        const result = await AuthService.login(username, password, deviceToken);
+        return result;
+      } else {
+        const loginPromise = AuthService.login(username, password);
+        const result = await loginPromise;
+        // console.log('User result here ', result);
+        return result;
+      }
     } catch (error: any) {
       if (axios.isAxiosError(error) && error.response) {
         Toast.show('Username or password wrongs', {

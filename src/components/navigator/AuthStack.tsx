@@ -18,7 +18,6 @@ import { TouchableOpacity, View } from 'react-native';
 import CustomBtn from '../global/CustomBtn';
 import { Toast } from 'react-native-toast-notifications';
 import ClassInfo from '../../screens/class/ClassInfo';
-import { usePushNotifications } from '../../../usePushNotification';
 
 const AuthStack = () => {
     const Stack = createStackNavigator();
@@ -40,16 +39,6 @@ const AuthStack = () => {
             </View>
         )
     }
-
-    const { expoPushToken, notification } = usePushNotifications()
-
-    const data = JSON.stringify(notification, undefined, 2);
-
-    useEffect(() => {
-        console.log("Expo push token: ", expoPushToken);
-        console.log("Notification: ", notification);
-        console.log("Data: ", data);
-    }, [expoPushToken, notification])
 
     return (
         <ErrorBoundary

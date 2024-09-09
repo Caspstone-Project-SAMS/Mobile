@@ -6,12 +6,22 @@ import { GGUserInfo } from '../models/auth/GoogleResponse';
 const login = async (
   username: string,
   password: string,
+  deviceToken?: string,
 ): Promise<UserInfo | undefined> => {
-  const response = await axios.post(USER_AUTH_API + '/login', {
-    username,
-    password,
-  });
-  return response.data as UserInfo;
+  if (deviceToken) {
+    const response = await axios.post(USER_AUTH_API + '/login', {
+      username,
+      password,
+      deviceToken,
+    });
+    return response.data as UserInfo;
+  } else {
+    const response = await axios.post(USER_AUTH_API + '/login', {
+      username,
+      password,
+    });
+    return response.data as UserInfo;
+  }
 };
 
 const getGGInfo = async (access_token: string): Promise<GGUserInfo> => {
