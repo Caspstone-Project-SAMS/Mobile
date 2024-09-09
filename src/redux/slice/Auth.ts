@@ -60,6 +60,7 @@ const login = createAsyncThunk(
     try {
       if (deviceToken) {
         const result = await AuthService.login(username, password, deviceToken);
+        console.log('User result here ', result);
         return result;
       } else {
         const loginPromise = AuthService.login(username, password);

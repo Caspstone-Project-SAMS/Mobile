@@ -30,8 +30,76 @@ const configModule = async (moduleID: number, configData: ConfigExtend) => {
   return response.data;
 };
 
+const connectModule = async (moduleID: number, userToken: string) => {
+  const response = await axios.post(
+    MODULE_API + '/Activate',
+    {
+      moduleID,
+      mode: 6,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json-patch+json',
+        Authorization: `Bearer ` + userToken,
+      },
+    },
+  );
+  return response.data;
+};
+
+const cancelSessionModule = async (
+  moduleID: number,
+  sessionId: number,
+  userToken: string,
+) => {
+  const response = await axios.post(
+    MODULE_API + '/Activate',
+    {
+      moduleID,
+      sessionId,
+      mode: 2,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json-patch+json',
+        Authorization: `Bearer ` + userToken,
+      },
+    },
+  );
+  return response.data;
+};
+
+const prepareDataModule = async (
+  moduleID: number,
+  sessionId: number,
+  userToken: string,
+  scheduleID: number,
+) => {
+  const response = await axios.post(
+    MODULE_API + '/Activate',
+    {
+      moduleID,
+      sessionId,
+      mode: 3,
+      PrepareAttendance: {
+        scheduleID,
+      },
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json-patch+json',
+        Authorization: `Bearer ` + userToken,
+      },
+    },
+  );
+  return response.data;
+};
+
 export const ModuleService = {
   setUpWifi,
   getModuleByEmployeeID,
   configModule,
+  connectModule,
+  cancelSessionModule,
+  prepareDataModule,
 };

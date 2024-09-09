@@ -22,6 +22,7 @@ import { getAllSemester } from '../../redux/slice/Semester'
 import { ScheduleResponse } from '../../models/schedule/ScheduleResponse'
 import { validateStatusSchedule } from '../../hooks/helpers/ScheduleHelper'
 import { HelperService } from '../../hooks/helpers/HelperFunc'
+import PrepareModule from '../../components/module/PrepareModule'
 
 const { width } = Dimensions.get('window');
 moment.updateLocale('ko', {
@@ -366,7 +367,10 @@ const Home = () => {
 
       <View style={styles.body}>
         <View style={styles.dashBoardCtn}>
-          <Text style={GLOBAL_STYLES.titleLabel}>Today Attendance</Text>
+          <View style={GLOBAL_STYLES.horizontalBetweenCenter}>
+            <Text style={GLOBAL_STYLES.titleLabel}>Today Attendance</Text>
+            {/* <PrepareModule /> */}
+          </View>
           <View style={{ flexDirection: "row", justifyContent: 'space-between', gap: 10 }}>
             <SmallCard
               titleIcon={require('../../assets/icons/upcoming_x3.png')}

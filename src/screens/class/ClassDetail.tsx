@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Modal, Text, TextInput } from 'react-native-paper'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 
-import { COLORS } from '../../assets/styles/variables'
+import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
 import DashboardCard from './cards/DashboardCard'
 import StudentActivityCard from './cards/StudentActivityCard'
@@ -16,6 +16,7 @@ import CustomBtn from '../../components/global/CustomBtn'
 import { Toast } from 'react-native-toast-notifications'
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { ClassService } from '../../hooks/Class'
+import PrepareModule from '../../components/module/PrepareModule'
 
 const { width } = Dimensions.get('window');
 
@@ -225,6 +226,17 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                                 <Image style={styles.titleIcon} source={require('../../assets/icons/plusIconBtn.png')} />
                             </TouchableOpacity>
                             <Animated.View style={[styles.actionsModal, animatedStyle]}>
+                                <PrepareModule
+                                    scheduleID={scheduleID}
+                                    txtStyle={{ color: FONT_COLORS.greyFontColor, textAlign: 'right' }}
+                                />
+
+                                <TouchableOpacity
+                                    onPress={() => { navigation.navigate('Module') }}
+                                >
+                                    <Text style={styles.actionItem}>Set up modules</Text>
+                                </TouchableOpacity>
+
                                 <TouchableOpacity
                                     onPress={() => {
                                         if (isAttendanceMode === true) {//Reset when repress on action
@@ -234,9 +246,6 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                                     }}
                                 >
                                     <Text style={styles.actionItem}>Take attendance mode</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity>
-                                    <Text style={styles.actionItem}>Set up modules</Text>
                                 </TouchableOpacity>
                             </Animated.View>
                         </View>
@@ -410,7 +419,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderWidth: 1,
         borderColor: COLORS.borderColor,
-        gap: 8,
+        gap: 10,
 
         position: 'absolute',
         top: 40,

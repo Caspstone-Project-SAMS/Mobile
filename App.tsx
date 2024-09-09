@@ -40,11 +40,11 @@ const App: React.FC = () => {
     <Provider store={Store}>
       <SafeAreaView style={styles.container} onLayout={onLayoutRootView}>
         <GestureHandlerRootView>
-          <PaperProvider theme={appTheme}>
-            <ToastProvider>
+          <ToastProvider>
+            <PaperProvider theme={appTheme}>
               <Navigator />
-            </ToastProvider>
-          </PaperProvider>
+            </PaperProvider>
+          </ToastProvider>
         </GestureHandlerRootView>
       </SafeAreaView>
     </Provider>
