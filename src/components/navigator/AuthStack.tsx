@@ -18,6 +18,7 @@ import { TouchableOpacity, View } from 'react-native';
 import CustomBtn from '../global/CustomBtn';
 import { Toast } from 'react-native-toast-notifications';
 import ClassInfo from '../../screens/class/ClassInfo';
+import Notification from '../../screens/notification/Notification';
 
 const AuthStack = () => {
     const Stack = createStackNavigator();
@@ -66,6 +67,8 @@ const AuthStack = () => {
                 <Stack.Screen name="SetUpModule" component={SetUpModule} />
                 <Stack.Screen name="ConfigModule" component={ConfigModule} />
                 <Stack.Screen name="Home" component={Home} />
+                {/* Notification */}
+                <Stack.Screen name="Notification" component={Notification} />
             </Stack.Navigator>
         </ErrorBoundary>
     )

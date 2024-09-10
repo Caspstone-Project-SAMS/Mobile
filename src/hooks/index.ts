@@ -21,6 +21,9 @@ export const CLASS_API = `${server}/Class`;
 export const MODULE_API = `${server}/Module`;
 export const WIFI_MODULE_API = 'http://192.168.4.1/connect-to';
 
+//Notification
+export const NOTIFICATION_API = `${server}/Notification`;
+
 //Google
 export const GET_GG_USER_INFO =
   'https://www.googleapis.com/oauth2/v1/userinfo?access_token=';
