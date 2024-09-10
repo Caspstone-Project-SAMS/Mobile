@@ -9,6 +9,7 @@ import { GLOBAL_STYLES } from '../../assets/styles/styles';
 import { Module } from '../../models/Module/Module';
 import CustomBtn from '../global/CustomBtn';
 import { Toast } from 'react-native-toast-notifications';
+import axios from 'axios';
 
 type props = {
     txtStyle?: TextStyle,
@@ -74,10 +75,14 @@ const PrepareModule: React.FC<props> = ({ txtStyle, scheduleID }) => {
         if (sessionID === 0 && userToken) {
             const promise = ModuleService.connectModule(selectedModule.moduleID, userToken);
             promise.then(data => {
-                Toast.show("Module Connected", { type: 'success', placement: 'top' })
+                Toast.show("Module Connected", { type: 'success', placement: 'top', duration: 1200 })
                 setSessionID(data.result.sessionId);
             }).catch(err => {
-                console.log("Error when connect module", JSON.stringify(err));
+                if (axios.isAxiosError(err) && err.response) {
+                    console.log("This is response ", err.response.data);
+                    Toast.show('Module not online!!', { type: 'danger', placement: 'top' })
+                    resetState()
+                }
             })
         }
     }
@@ -86,7 +91,7 @@ const PrepareModule: React.FC<props> = ({ txtStyle, scheduleID }) => {
         if (sessionID === 1 && userToken) {
             const promise = ModuleService.cancelSessionModule(selectedModule.moduleID, sessionID, userToken);
             promise.then(data => {
-                Toast.show("Module Disconnected", { type: 'warning', placement: 'top' })
+                Toast.show("Module Disconnected", { type: 'warning', placement: 'top', duration: 800 })
             }).catch(err => {
                 console.log("Error when cancel module", JSON.stringify(err));
             }).finally(() => resetState())
@@ -99,6 +104,7 @@ const PrepareModule: React.FC<props> = ({ txtStyle, scheduleID }) => {
             promise.then(data => {
                 Toast.show("Prepare data succeed", { type: 'success', placement: 'top' })
                 console.log('Prepare ok ', data);
+                hideModal()
             }).catch(err => {
                 console.log("Error prepare data ", JSON.stringify(err));
             })

@@ -4,6 +4,9 @@ import Title from '../../components/Title'
 import { Text, TextInput } from 'react-native-paper'
 import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import CustomBtn from '../../components/global/CustomBtn'
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import moment from 'moment'
+import { GLOBAL_STYLES } from '../../assets/styles/styles'
 
 type UserProfile = {
     firstName: string,
@@ -27,8 +30,23 @@ const AccountProfile = ({ navigation }) => {
         gender: 1,
         lastName: '',
         phoneNumber: '',
-        yob: ''
+        yob: '00/00/0000'
     })
+    const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+    const showDatePicker = () => {
+        setDatePickerVisibility(true);
+    };
+
+    const hideDatePicker = () => {
+        setDatePickerVisibility(false);
+    };
+
+    const handleConfirm = (date) => {
+        console.log("A date has been picked: ", moment(date).format('DD/MM/YYYY'));
+        const fmtTime = moment(date).format('YYYY-MM-DD')
+        setUserProfile(prev => ({ ...prev, yob: fmtTime }))
+        hideDatePicker();
+    };
 
     return (
         <ScrollView style={styles.container}>
@@ -138,6 +156,31 @@ const AccountProfile = ({ navigation }) => {
                     }}
                     onChangeText={val => setText(val)}
                 />
+
+                <View>
+                    <View>
+                        <Text>Birthday</Text>
+                        <TouchableOpacity
+                            onPress={() => {
+                                showDatePicker()
+                            }}
+                        >
+                            <View style={[GLOBAL_STYLES.card, { padding: 10, alignSelf: 'flex-start' }]}>
+                                <Text>{
+                                    userProfile.yob === '00/00/0000'
+                                        ? '00/00/0000'
+                                        : moment(userProfile.yob, 'YYYY-MM-DD', true).format('DD/MM/YYYY')
+                                }</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <DateTimePickerModal
+                            isVisible={isDatePickerVisible}
+                            onConfirm={handleConfirm}
+                            onCancel={hideDatePicker}
+                        />
+                    </View>
+                </View>
                 <TouchableOpacity>
                     <CustomBtn text='Update Profile' />
                 </TouchableOpacity>
