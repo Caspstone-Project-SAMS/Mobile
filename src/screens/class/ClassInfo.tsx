@@ -166,13 +166,13 @@ const ClassInfo = ({ route, navigation }) => {
 
             <View style={[GLOBAL_STYLES.horizontalBetweenCenter, { marginTop: 20 }]}>
                 <Text style={styles.label}># Attendance report</Text>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     onPress={() => {
                         // ClassService.downloadReportExcel(classID, classCode)
                     }}
                 >
                     <Text style={styles.linkTxt}>Download report</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
             <View style={[GLOBAL_STYLES.card, styles.attendanceChartCtn]}>
                 <View style={{ height: 115, width: '50%', position: 'relative' }}>

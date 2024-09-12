@@ -14,6 +14,7 @@ import Octicons from 'react-native-vector-icons/Octicons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import useDispatch from '../../redux/UseDispatch'
 import { logout } from '../../redux/slice/Auth'
+import { Navigation } from '../../hooks/navigation/Navigation'
 
 type CardProps = {
     icon: ReactElement,
@@ -34,7 +35,7 @@ const ActionCard: React.FC<CardProps> = ({ icon, text }) => {
     )
 }
 
-const Account = ({ navigation }) => {
+const Account: React.FC<Navigation> = ({ navigation }) => {
     const userDetail = useSelector((state: RootState) => state.auth.userDetail?.result);
     const dispatch = useDispatch();
 
@@ -54,7 +55,9 @@ const Account = ({ navigation }) => {
                 />
                 <Text style={styles.usernameTxt}>{userDetail?.displayName}</Text>
                 <Text style={styles.userSubTxt}>{userDetail?.role.name}</Text>
-                <TouchableOpacity style={{ width: '100%', marginVertical: 12 }}>
+                <TouchableOpacity style={{ width: '100%', marginVertical: 12 }}
+                    onPress={() => navigation.navigate('AccountProfile', { updateAble: true })}
+                >
                     <CustomBtn
                         customStyle={styles.editBtn}
                         text='Edit Profile'
@@ -64,7 +67,7 @@ const Account = ({ navigation }) => {
 
             <View style={styles.body}>
                 <TouchableOpacity
-                    onPress={() => navigation.navigate('AccountProfile')}
+                    onPress={() => navigation.navigate('AccountProfile', { updateAble: false })}
                 >
                     <ActionCard icon={<Feather name='user' size={20} color='#000' />} text='My Profile' key={'profile'} />
                 </TouchableOpacity>

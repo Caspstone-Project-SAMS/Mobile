@@ -17,6 +17,8 @@ import { Toast } from 'react-native-toast-notifications'
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { ClassService } from '../../hooks/Class'
 import PrepareModule from '../../components/module/PrepareModule'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../redux/Store'
 
 const { width } = Dimensions.get('window');
 
@@ -31,6 +33,8 @@ interface AttendanceExtend extends Attendance {
     absentPercentage: number
 }
 
+let socket;
+
 const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
     const { schedule: { classCode, classID, date, endTime, roomName, scheduleID, slotNumber, startTime, status, subjectCode } } = route.params
 
@@ -44,6 +48,8 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
     const [isAttendanceMode, setIsAttendanceMode] = useState<boolean>(false);
     const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
 
+    const userToken = useSelector((state: RootState) => state.auth.userDetail?.token)
+
     const opacity = useSharedValue(0);
     const animatedStyle = useAnimatedStyle(() => {
         return {
@@ -52,6 +58,51 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
             }),
         };
     });
+
+    function activeWebSocket() {
+        if (userToken) {
+            socket = new WebSocket("wss://sams-project.com/ws/client?mobile=true", ["access_token", userToken]);
+            socket.onopen = function (event) {
+                console.log('Connected websocket for slot class detail');
+                // setInformation("Connected");
+            };
+
+            socket.onclose = function (event) {
+                console.log("Connection closed");
+                console.log(event);
+            };
+
+            socket.onmessage = function (event) {
+                console.log("Event coming", event);
+
+                const message = JSON.parse(event.data);
+                console.log("mess message event*", message.Event);
+                console.log("mess message Data*", message.Data);
+                switch (message.Event) {
+                    case "StudentAttended":
+                        {
+                            try {
+                                const studentIDs = message.Data.studentIDs
+                                console.log("studentIDS ", studentIDs);
+                                if (Array.isArray(studentIDs)) {
+                                    studentIDs.map(item => {
+                                        console.log("On update item ", item);
+
+
+                                    })
+                                }
+                            } catch (error) {
+                                // Toast.show('Unexpected error happened when connecting')
+                                console.log("An error occured in websocket");
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            };
+        }
+    }
 
     const getScheduleDetail = () => {
         const promise = AttendanceService.getAttendanceByScheduleId(scheduleID)
@@ -145,7 +196,7 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
             }
         });
 
-        console.log("Gonna updated this list - fmtupdatedlist", fmtUpdatedList);
+        // console.log("Gonna updated this list - fmtupdatedlist", fmtUpdatedList);
         const response = AttendanceService.updateListAttendance(fmtUpdatedList);
         response.then(data => {
             setIsAttendanceMode(false);
@@ -170,6 +221,11 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
 
     useEffect(() => {
         getScheduleDetail();
+        // activeWebSocket();
+
+        // return () => {
+        //     socket.close();
+        // };
     }, [])
 
     //Original change -> update for ui and dashboard
@@ -204,9 +260,9 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
         }
     }, [selectedView]);
 
-    useEffect(() => {
-        console.log("Filter list has change ------------ ", filteredList);
-    }, [filteredList])
+    // useEffect(() => {
+    //     console.log("Filter list has change ------------ ", filteredList);
+    // }, [filteredList])
 
     return (
         <ScrollView style={styles.container}>
@@ -274,8 +330,8 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                     { gap: 30, marginBottom: 24 }
                 ]}>
                     <View style={styles.classInfo}>
-                        <Text style={styles.infoTxt}>Subject: {subjectCode}</Text>
                         <Text style={styles.infoTxt}>Room: {roomName}</Text>
+                        <Text style={styles.infoTxt}>Subject: {subjectCode}</Text>
                     </View>
                     <TextInput
                         mode="outlined"

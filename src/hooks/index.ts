@@ -4,6 +4,9 @@ const server = 'https://sams-project.com/api';
 //Auth
 export const USER_AUTH_API = `${server}/Auth`;
 
+//User
+export const USER_API = `${server}/User`;
+
 //Attendance
 export const ATTENDANCE_API = `${server}/Attendance`;
 

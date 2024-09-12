@@ -103,7 +103,7 @@ const PrepareModule: React.FC<props> = ({ txtStyle, scheduleID }) => {
             const promise = ModuleService.prepareDataModule(selectedModule.moduleID, sessionID, userToken, scheduleID)
             promise.then(data => {
                 Toast.show("Prepare data succeed", { type: 'success', placement: 'top' })
-                console.log('Prepare ok ', data);
+                // console.log('Prepare ok ', data);
                 hideModal()
             }).catch(err => {
                 console.log("Error prepare data ", JSON.stringify(err));
@@ -122,10 +122,6 @@ const PrepareModule: React.FC<props> = ({ txtStyle, scheduleID }) => {
             handleConnect();
         }
     }, [selectedModule])
-
-    useEffect(() => {
-        console.log("SessionID changed ", sessionID);
-    }, [sessionID])
 
     const ModuleItem: React.FC<{ data: Module }> = ({ data: { moduleID, mode, connectionStatus } }) => (
         <View style={[styles.moduleItem,

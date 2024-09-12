@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { Chip, Divider, Text } from 'react-native-paper';
 import { GLOBAL_STYLES } from '../../../assets/styles/styles';
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import moment from 'moment';
 
 type props = {
     date: string,
@@ -12,7 +13,8 @@ type props = {
     endTime: string,
     room?: string,
     studentAttended?: string,
-    classSize: any
+    classSize: any,
+    opened?: boolean
 }
 
 const statusColor = {
@@ -21,13 +23,13 @@ const statusColor = {
     upcoming: '#FBBF24'
 }
 
-const ScheduleCard: React.FC<props> = ({ date, endTime, slotNumber, startTime, status, room, studentAttended, classSize }) => {
-    const [isOpen, setIsOpen] = useState(false);
+const ScheduleCard: React.FC<props> = ({ date, endTime, slotNumber, startTime, status, room, studentAttended, classSize, opened }) => {
+    const [isOpen, setIsOpen] = useState(opened ? opened : false);
 
     return (
         <View style={[GLOBAL_STYLES.card, styles.container]}>
             <View style={[GLOBAL_STYLES.horizontalBetweenCenter, styles.title]}>
-                <Text style={styles.titleTxt}>{date} / {`(${slotNumber})`}</Text>
+                <Text style={styles.titleTxt}>{moment(date).format('DD-MM-YY')} / {`(${slotNumber})`}</Text>
                 <TouchableOpacity
                     onPress={() => setIsOpen(!isOpen)}
                 >

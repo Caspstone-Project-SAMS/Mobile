@@ -1,7 +1,8 @@
 import axios from 'axios';
-import { GET_GG_USER_INFO, USER_AUTH_API } from './index';
+import { GET_GG_USER_INFO, USER_API, USER_AUTH_API } from './index';
 import { UserInfo } from '../models/UserInfo';
 import { GGUserInfo } from '../models/auth/GoogleResponse';
+import { UserProfile } from '../screens/account/AccountProfile';
 
 const login = async (
   username: string,
@@ -62,11 +63,41 @@ const changePassword = async (
   return response.data;
 };
 
+const getUserDetailByID = async (id: string) => {
+  const response = await axios.get(`${USER_API}/${id}`);
+  return response.data;
+};
+
+const updateProfileByID = async (id: string, data: UserProfile) => {
+  const response = await axios.put(
+    `${USER_API}/${id}`,
+    {
+      Email: data.email,
+      PhoneNumber: data.phoneNumber,
+      DisplayName: data.displayName,
+      Address: data.address,
+      DOB: data.DOB,
+      Gender: data.gender,
+      FirstName: data.firstName,
+      LastName: data.lastName,
+    },
+    {
+      headers: {
+        accept: '*/*',
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  );
+  return response.data;
+};
+
 const AuthService = {
   login,
   getGGInfo,
   forgotPassword,
   changePassword,
+  getUserDetailByID,
+  updateProfileByID,
 };
 
 export default AuthService;
