@@ -1,80 +1,115 @@
-import React from 'react'
-import { Image, StyleSheet, View } from 'react-native'
-import { Text } from 'react-native-paper'
-import { FONT_COLORS } from '../../../assets/styles/variables'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import React, { useState } from 'react'
+import { Chip, Divider, Text } from 'react-native-paper';
+import Ionicons from 'react-native-vector-icons/Ionicons'
+import moment from 'moment';
+import { GLOBAL_STYLES } from '../../../assets/styles/styles';
 
 type props = {
-    subjectCode: string,
-    room: string,
+    date: string,
+    status: number,
+    slotNumber: number,
     startTime: string,
     endTime: string,
-    status: 'Past' | 'Current' | 'Upcoming',
-    attendStudent: string,
-    attended: number,
-    slotNumber: number
+    room?: string,
+    studentAttended?: string,
+    classSize: any,
+    opened?: boolean,
+    classCode: string
 }
 
-const OldActivityCard: React.FC<props> = ({ room, status, subjectCode, endTime, startTime, attendStudent, attended, slotNumber }) => {
-    return (
-        <View style={styles.container}>
-            <View style={styles.left}>
+const statusColor = {
+    current: '#C1F2B0',
+    past: '#94A3B8',
+    upcoming: '#FBBF24'
+}
 
-                <View style={{ gap: 2, marginLeft: 10 }}>
-                    <Text style={styles.mainTxt}>{subjectCode}</Text>
-                    <Text style={styles.mainSubTxt}>Attended: {attendStudent}</Text>
-                    <Text style={styles.subTxt}>Ro.{room}</Text>
-                    <Text style={styles.subTxt}>Slot {slotNumber}</Text>
-                </View>
+const OldActivityCard: React.FC<props> = ({ date, endTime, slotNumber, startTime, status, room, studentAttended, classSize, opened, classCode }) => {
+    const [isOpen, setIsOpen] = useState(opened ? opened : false);
+
+    return (
+        <View style={[GLOBAL_STYLES.card, styles.container]}>
+            <View style={[GLOBAL_STYLES.horizontalBetweenCenter, styles.title]}>
+                <Text style={styles.titleTxt}>{moment(date).format('DD-MM-YY')} / {`(${slotNumber})`}</Text>
+                <TouchableOpacity
+                    onPress={() => setIsOpen(!isOpen)}
+                >
+                    <Ionicons name={isOpen ? 'chevron-up-outline' : 'chevron-down-outline'} size={20} />
+                </TouchableOpacity>
             </View>
-            <View style={styles.right}>
-                <View style={styles.iconCtn}>
-                    <Image style={styles.upcomingIcon} source={require('../../../assets/icons/out_class_x3.png')} />
-                </View>
-                {/* <Text style={styles.mainTxt}>{startTime} - {endTime}</Text> */}
-                <Text style={styles.subTxt}>{status}</Text>
-            </View>
+            {
+                isOpen && (
+                    <View style={{ marginTop: 8 }}>
+                        <Divider style={styles.divider} />
+                        <View style={styles.contents}>
+                            <View>
+                                <Text>
+                                    <Text>Class:{' '}</Text>
+                                    <Text>{classCode}</Text>
+                                </Text>
+                                <Text>
+                                    <Text>Room:{' '}</Text>
+                                    <Text>{room}</Text>
+                                </Text>
+                                <Text>
+                                    <Text>Slot:{' '}</Text>
+                                    <Text>{slotNumber} ({startTime && startTime.substring(0, 5)} - {endTime && endTime.substring(0, 5)})</Text>
+                                </Text>
+                                <Text>
+                                    <Text>Student Attended:{' '}</Text>
+                                    <Text>{studentAttended ? studentAttended : `0/${classSize}`}</Text>
+                                </Text>
+                            </View>
+
+                            <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                                <Text>Status: </Text>
+                                <Chip
+                                    mode='outlined'
+                                    style={[
+                                        styles.statusChip,
+                                        {
+                                            backgroundColor: status === 1 ? ('#FFEAA7') : status === 2 ? ('#C1F2B0') : ('#94A3B8')
+                                        }
+                                    ]}
+                                >
+                                    {status === 1 ? ('Not yet') : status === 2 ? ('On going') : ('Ended')}
+                                </Chip>
+                            </View>
+                        </View>
+                    </View>
+                )
+            }
         </View>
     )
 }
 
+export default OldActivityCard
+
 const styles = StyleSheet.create({
     container: {
+        paddingHorizontal: 15,
+        paddingVertical: 8
+    },
+    title: {
+        // paddingHorizontal: 15,
+        // paddingVertical: 8
+    },
+    titleTxt: {
+        fontSize: 18,
+        fontFamily: 'Lexend-Regular'
+    },
+    divider: {
+        height: 1,
+        width: '100%',
+        alignSelf: 'center',
+        marginBottom: 4
+    },
+    contents: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: '#FFF',
-        borderRadius: 8,
-        paddingVertical: 12,
-        paddingHorizontal: 20
+        justifyContent: 'space-between'
     },
-    left: {
-        flexDirection: 'row'
-    },
-    iconCtn: {
-        padding: 6,
-        borderRadius: 6,
+    statusChip: {
         alignSelf: 'flex-start',
-        backgroundColor: '#F6F6F6',
-    },
-    upcomingIcon: {
-        width: 18,
-        height: 18
-    },
-    mainTxt: {
-        fontFamily: 'Lexend-Regular',
-        fontSize: 18
-    },
-    mainSubTxt: {
-        fontFamily: 'Lexend-Regular',
-        fontSize: 16
-    },
-    subTxt: {
-        color: FONT_COLORS.blurFontColor
-    },
-    right: {
-        gap: 2,
-        alignItems: 'flex-end'
-    },
+        borderRadius: 6
+    }
 })
-
-export default OldActivityCard

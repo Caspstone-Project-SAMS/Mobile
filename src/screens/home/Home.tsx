@@ -529,7 +529,7 @@ const Home = () => {
                         const isOpen = index === 0;
 
                         return (
-                          <ScheduleCard
+                          <OldActivityCard
                             classSize={0}
                             date={key}
                             slotNumber={item.slotNumber}
@@ -540,6 +540,7 @@ const Home = () => {
                             room={item.roomName}
                             studentAttended={item.attendStudent}
                             opened={isOpen}
+                            classCode={item.classCode}
                           />
                         )
                       })
