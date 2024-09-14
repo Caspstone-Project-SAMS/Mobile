@@ -17,6 +17,7 @@ import Title from '../../components/Title';
 const SetUpModule: React.FC = ({ navigation }) => {
     const [selectedView, setSelectedView] = useState<'wifi' | 'module'>('wifi')
     const [currentWifi, setCurrentWifi] = useState<string>('')
+    const [moduleWifi, setModuleWifi] = useState<string>('')
     const [isConnectedModule, setIsConnectedModule] = useState<boolean>(false)
 
     //Setup module
@@ -72,6 +73,7 @@ const SetUpModule: React.FC = ({ navigation }) => {
                         // list.map(item => {
                         //     console.log('wifi item', item);
                         // })
+                        getCurrentWifiSSID();
                     }, 1200)
                 }).catch(err => {
                     setOnLoading(false);
@@ -89,6 +91,11 @@ const SetUpModule: React.FC = ({ navigation }) => {
 
     const getCurrentWifiSSID = async () => {
         const ssid = await WifiManager.getCurrentWifiSSID()
+        if (ssid.includes('BE-CA')) {
+            setModuleWifi(ssid)
+        } else {
+            setModuleWifi('')
+        }
         setCurrentWifi(ssid)
     }
     getCurrentWifiSSID();
@@ -123,7 +130,7 @@ const SetUpModule: React.FC = ({ navigation }) => {
 
             <View style={styles.titleContainer}>
                 <Text>Wifi Connected: {currentWifi}</Text>
-                <Text>Module Connected: No</Text>
+                <Text>Module Connected: {moduleWifi.length > 0 ? moduleWifi : 'No'}</Text>
             </View>
             <View
                 style={[GLOBAL_STYLES.horizontalDivider, { marginVertical: 10 }]}
