@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { View, StyleSheet, Image, TouchableOpacity, Dimensions, Pressable, ScrollView } from 'react-native'
+import { View, StyleSheet, Image, TouchableOpacity, Dimensions, Pressable, ScrollView, FlatList } from 'react-native'
 import { Text } from 'react-native-paper'
 import Swiper from 'react-native-swiper'
 import moment from 'moment'
@@ -22,6 +22,14 @@ import { getAllSemester } from '../../redux/slice/Semester'
 import { ScheduleResponse } from '../../models/schedule/ScheduleResponse'
 import { validateStatusSchedule } from '../../hooks/helpers/ScheduleHelper'
 import { HelperService } from '../../hooks/helpers/HelperFunc'
+import PrepareModule from '../../components/module/PrepareModule'
+import { ScheduleService } from '../../hooks/Schedule'
+import axios from 'axios'
+import { DividerWithTxt } from '../../components/global/DividerWithTxt'
+import OldActivityCard from './cards/OldActivityCard'
+import ScheduleCard from '../class/cards/ScheduleCard'
+import { NotificationService } from '../../hooks/Notification'
+// import { connectWebSocket, disconnectWebSocket } from '../../redux/slice/WebSocket'
 
 const { width } = Dimensions.get('window');
 moment.updateLocale('ko', {
@@ -46,6 +54,7 @@ const Home = () => {
   const { data, todaySchedules, error } = useSelector((state: RootState) => state.schedule)
   const userInfo = useSelector((state: RootState) => state.auth.userDetail)
   const semesters = useSelector((state: RootState) => state.semester.data)
+  // const socketMsg = useSelector((state: RootState) => state.websocket.socket);
 
   const swiper = useRef();
   const toast = useToast();
@@ -59,6 +68,8 @@ const Home = () => {
   const [dashBoardInfo, setDashboardInfo] = useState<Dashboard | undefined>(undefined);
   const [selectedInfo, setSelectedInfo] = useState<SelectedInfo>({ currentDate: new Date(), selectedDate: 'Today' });
   const [isFocus, setIsFocus] = useState<boolean>(false);
+  const [oldSchedules, setOldSchedules] = useState<any>();
+  const [isHavingNotification, setIsHavingNotification] = useState(false)
 
   const weeks = useMemo(() => {
     const start = moment().add(0, 'weeks').startOf('week');
@@ -176,7 +187,73 @@ const Home = () => {
     return granted;
   }
 
+  const fetchOldSchedules = (semester: number) => {
+    const userId = userInfo?.result?.id;
+    const prev5 = moment().subtract(5, 'days').format('YYYY-MM-DD');
+    const prev1 = moment().subtract(1, 'days').format('YYYY-MM-DD');
+
+    if (userId && semester) {
+      const getPromise = ScheduleService.getScheduleByDay(
+        userId,
+        semester,
+        prev5,
+        prev1,
+      );
+      getPromise.then(data => {
+        console.log("This is the last 5 data ", data);
+        const sortedList = data.sort((a, b) => moment(b.date).diff(moment(a.date)));
+
+        const groupedData = sortedList.reduce((acc, currentItem) => {
+          const date = currentItem.date;
+          if (!acc[date]) {
+            acc[date] = [];
+          }
+          acc[date].push(currentItem);
+          return acc;
+        }, {});
+        // console.log("This is formatted list ", groupedData);
+        setOldSchedules(groupedData);
+      }).catch(err => {
+        if (axios.isAxiosError(err) && err.response)
+          console.log("err in last 7 data", err.response.data);
+      })
+    }
+  }
+
+  const checkHavingNotification = () => {
+    const userID = userInfo?.result?.id
+    if (userID) {
+      console.log("Checking is there having noti----------------");
+      const promise = NotificationService.getNotificationsById(userID)
+      promise.then(data => {
+        let havingNoti = false
+        data.forEach(item => {
+          if (!item.read) {
+            havingNoti = true;
+            return
+          }
+        })
+        setIsHavingNotification(havingNoti);
+      }).catch(err => {
+        console.log("err when get noti");
+        setIsHavingNotification(false);
+      })
+    }
+  }
+
   useEffect(() => {
+    // if (userInfo && userInfo.token) {
+    //   const webSocket = new WebSocket('wss://sams-project.com/ws/client?mobile=true', [
+    //     'access_token',
+    //     userInfo.token,
+    //   ]);
+    //   webSocket.onopen = () => console.log('WebSocket connected');
+    //   webSocket.onmessage = (message) => console.log('Message received:', message.data);
+    //   webSocket.onclose = () => console.log('WebSocket closed');
+    //   dispatch(connectWebSocket(webSocket));
+    // }
+    // return dispatch(disconnectWebSocket());
+
     if (semesters && semesters.length === 0) {
       dispatch(getAllSemester());
     }
@@ -198,7 +275,7 @@ const Home = () => {
 
   useEffect(() => {
     const lecturerId = userInfo?.result?.id
-    let semesterId = 5
+    let semesterId = 2
     if (semesters && semesters.length !== 0) {
       semesters.forEach(item => {
         if (item.semesterStatus === 2) {
@@ -209,6 +286,8 @@ const Home = () => {
     }
     if (lecturerId && semesterId) {
       dispatch(getTodaySchedule({ lecturerId, semesterId }));
+      // console.log("Fetching ole, semester: ", semesterId);
+      fetchOldSchedules(semesterId);
     }
 
     const permission = grantedPermission();
@@ -240,6 +319,7 @@ const Home = () => {
     useCallback(() => {
       // Code to run when the screen is focused
       setCurrentDay(new Date())
+      checkHavingNotification()
 
       return () => {
         // Code to run when the screen is unfocused
@@ -248,6 +328,9 @@ const Home = () => {
     }, [])
   );
 
+  // useEffect(() => {
+  //   console.log("Socket changed ", socketMsg);
+  // }, [socketMsg])
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -274,18 +357,26 @@ const Home = () => {
             </View>
           </View>
 
-          <TouchableOpacity
-            activeOpacity={0.4}
-            style={styles.bellNotification}
-            onPress={() => {
-              //  navigation.navigate('ScheduleSwipe') 
-              // setWifiPermission(grantedPermission())
-            }}
-          >
-            <Image source={require('../../assets/icons/bell.png')}
-              style={styles.bellIcon}
-            />
-          </TouchableOpacity>
+          <View style={{ position: 'relative' }}>
+            <TouchableOpacity
+              activeOpacity={0.4}
+              style={styles.bellNotification}
+              onPress={() => {
+                navigation.navigate('Notification')
+                //  navigation.navigate('ScheduleSwipe') 
+                // setWifiPermission(grantedPermission())
+              }}
+            >
+              <Image source={require('../../assets/icons/bell.png')}
+                style={styles.bellIcon}
+              />
+              {
+                isHavingNotification && (
+                  <View style={[styles.badgeDot, { position: 'absolute', top: 1, right: 0 }]}></View>
+                )
+              }
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={{ flex: 1 }}>
@@ -324,7 +415,10 @@ const Home = () => {
 
       <View style={styles.body}>
         <View style={styles.dashBoardCtn}>
-          <Text style={GLOBAL_STYLES.titleLabel}>Today Attendance</Text>
+          <View style={GLOBAL_STYLES.horizontalBetweenCenter}>
+            <Text style={GLOBAL_STYLES.titleLabel}>Today Attendance</Text>
+            {/* <PrepareModule /> */}
+          </View>
           <View style={{ flexDirection: "row", justifyContent: 'space-between', gap: 10 }}>
             <SmallCard
               titleIcon={require('../../assets/icons/upcoming_x3.png')}
@@ -415,6 +509,48 @@ const Home = () => {
             }
           </View>
         </View>
+
+        {oldSchedules &&
+          <View style={styles.previousClasses}>
+            <Text style={GLOBAL_STYLES.titleLabel}>Previous class (Last 5 days)</Text>
+
+            <View style={{ gap: 10 }}>
+              {
+                Object.entries(oldSchedules).map(([key, value], index) => (
+                  <View
+                    style={{ gap: 10 }}
+                    key={`date_${key}`}
+                  >
+                    <DividerWithTxt text={moment(key, 'YYYY-MM-DD', true).format('DD/MM/YY')} color='#000' />
+                    {
+                      Array.isArray(value) && value.map((item) => {
+                        const startTime = item.startTime.substring(0, 5);
+                        const endTime = item.endTime.substring(0, 5);
+                        const isOpen = index === 0;
+
+                        return (
+                          <OldActivityCard
+                            classSize={0}
+                            date={key}
+                            slotNumber={item.slotNumber}
+                            startTime={startTime}
+                            endTime={endTime}
+                            status={item.scheduleStatus}
+                            key={`old_schedule_${item.scheduleID}`}
+                            room={item.roomName}
+                            studentAttended={item.attendStudent}
+                            opened={isOpen}
+                            classCode={item.classCode}
+                          />
+                        )
+                      })
+                    }
+                  </View>
+                ))
+              }
+            </View>
+          </View>
+        }
       </View>
     </ScrollView>
   )
@@ -460,6 +596,13 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 1,
     borderColor: COLORS.borderColor
+  },
+  badgeDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 6,
+    alignSelf: 'center',
+    backgroundColor: 'red',
   },
   bellIcon: {
     width: 20,
@@ -543,6 +686,9 @@ const styles = StyleSheet.create({
   },
   classActivities: {
     marginTop: 5,
+  },
+  previousClasses: {
+    marginTop: 15,
     marginBottom: 25
   },
   activitiesHeader: {

@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Modal, Text, TextInput } from 'react-native-paper'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 
-import { COLORS } from '../../assets/styles/variables'
+import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
 import DashboardCard from './cards/DashboardCard'
 import StudentActivityCard from './cards/StudentActivityCard'
@@ -15,6 +15,10 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-na
 import CustomBtn from '../../components/global/CustomBtn'
 import { Toast } from 'react-native-toast-notifications'
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { ClassService } from '../../hooks/Class'
+import PrepareModule from '../../components/module/PrepareModule'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../redux/Store'
 
 const { width } = Dimensions.get('window');
 
@@ -25,18 +29,26 @@ type DashBoard = {
     pending: number,
 }
 
+interface AttendanceExtend extends Attendance {
+    absentPercentage: number
+}
+
+let socket;
+
 const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
     const { schedule: { classCode, classID, date, endTime, roomName, scheduleID, slotNumber, startTime, status, subjectCode } } = route.params
 
     const [searchVal, setSearchVal] = useState<string>('');
     const [selectedView, setSelectedView] = useState<'list' | 'pending' | 'absent'>('list');
     const [dashBoard, setDashBoard] = useState<DashBoard>({ attendance: 0, absent: 0, attended: 0, pending: 0 });
-    const [studentList, setStudentList] = useState<Attendance[]>([]);
-    const [filteredList, setFilteredList] = useState<Attendance[]>([]);
+    const [studentList, setStudentList] = useState<Attendance[] | AttendanceExtend[]>([]);
+    const [filteredList, setFilteredList] = useState<Attendance[] | AttendanceExtend[]>([]);
 
     const [isOpenActions, setIsOpenActions] = useState<boolean>(false);
     const [isAttendanceMode, setIsAttendanceMode] = useState<boolean>(false);
     const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
+
+    const userToken = useSelector((state: RootState) => state.auth.userDetail?.token)
 
     const opacity = useSharedValue(0);
     const animatedStyle = useAnimatedStyle(() => {
@@ -47,13 +59,84 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
         };
     });
 
+    function activeWebSocket() {
+        if (userToken) {
+            socket = new WebSocket("wss://sams-project.com/ws/client?mobile=true", ["access_token", userToken]);
+            socket.onopen = function (event) {
+                console.log('Connected websocket for slot class detail');
+                // setInformation("Connected");
+            };
+
+            socket.onclose = function (event) {
+                console.log("Connection closed");
+                console.log(event);
+            };
+
+            socket.onmessage = function (event) {
+                console.log("Event coming", event);
+
+                const message = JSON.parse(event.data);
+                console.log("mess message event*", message.Event);
+                console.log("mess message Data*", message.Data);
+                switch (message.Event) {
+                    case "StudentAttended":
+                        {
+                            try {
+                                const studentIDs = message.Data.studentIDs
+                                console.log("studentIDS ", studentIDs);
+                                if (Array.isArray(studentIDs)) {
+                                    studentIDs.map(item => {
+                                        console.log("On update item ", item);
+
+
+                                    })
+                                }
+                            } catch (error) {
+                                // Toast.show('Unexpected error happened when connecting')
+                                console.log("An error occured in websocket");
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            };
+        }
+    }
+
     const getScheduleDetail = () => {
         const promise = AttendanceService.getAttendanceByScheduleId(scheduleID)
+        const promise2 = ClassService.getClassByID(classID)
         console.log("Getting schedule id ", scheduleID);
         promise.then(list => {
-            setDashBoard(dashboardCalculator(list));
-            setStudentList(list);
-            setFilteredList(list);
+            promise2.then(data => {
+
+                if (data.students && data.students?.length > 0) {
+                    const students = data.students;
+                    const modifiedList: AttendanceExtend[] = list.map(studentAttendance => {
+                        let result: AttendanceExtend = { ...studentAttendance, absentPercentage: 0 }
+
+                        students.forEach(student => {
+                            if (studentAttendance.studentID === student.id) {
+                                result = { ...result, absentPercentage: student.absencePercentage }
+                            }
+                        })
+                        return result
+                    })
+                    setDashBoard(dashboardCalculator(modifiedList));
+                    setStudentList(modifiedList);
+                    setFilteredList(modifiedList);
+                } else {
+                    setDashBoard(dashboardCalculator(list));
+                    setStudentList(list);
+                    setFilteredList(list);
+                }
+
+            }).catch(err => {
+                setDashBoard(dashboardCalculator(list));
+                setStudentList(list);
+                setFilteredList(list);
+            })
         }).catch(err => {
             console.log("Error when get schedule detail");
         })
@@ -84,7 +167,7 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
         if (isOpenActions) {
             setIsOpenActions(false);
         }
-        console.log("he;ppppppppp--------------", studentCode, '-', status);
+        // console.log("he;ppppppppp--------------", studentCode, '-', status);
         setFilteredList((prevList) => {
             return prevList.map(student => {
                 if (student.studentCode === studentCode) {
@@ -113,12 +196,12 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
             }
         });
 
-        console.log("Gonna updated this list - fmtupdatedlist", fmtUpdatedList);
+        // console.log("Gonna updated this list - fmtupdatedlist", fmtUpdatedList);
         const response = AttendanceService.updateListAttendance(fmtUpdatedList);
         response.then(data => {
             setIsAttendanceMode(false);
             getScheduleDetail()
-            Toast.show('Update Attendance Successfully!')
+            Toast.show('Update Attendance Successfully!', { type: 'success', placement: 'top' })
         }).catch(err => {
             Toast.show('Something went wrong, please try again later');
         })
@@ -138,6 +221,11 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
 
     useEffect(() => {
         getScheduleDetail();
+        // activeWebSocket();
+
+        // return () => {
+        //     socket.close();
+        // };
     }, [])
 
     //Original change -> update for ui and dashboard
@@ -172,9 +260,9 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
         }
     }, [selectedView]);
 
-    useEffect(() => {
-        console.log("Filter list has change ------------ ", filteredList);
-    }, [filteredList])
+    // useEffect(() => {
+    //     console.log("Filter list has change ------------ ", filteredList);
+    // }, [filteredList])
 
     return (
         <ScrollView style={styles.container}>
@@ -194,6 +282,17 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                                 <Image style={styles.titleIcon} source={require('../../assets/icons/plusIconBtn.png')} />
                             </TouchableOpacity>
                             <Animated.View style={[styles.actionsModal, animatedStyle]}>
+                                <PrepareModule
+                                    scheduleID={scheduleID}
+                                    txtStyle={{ color: FONT_COLORS.greyFontColor, textAlign: 'right' }}
+                                />
+
+                                <TouchableOpacity
+                                    onPress={() => { navigation.navigate('Module') }}
+                                >
+                                    <Text style={styles.actionItem}>Set up modules</Text>
+                                </TouchableOpacity>
+
                                 <TouchableOpacity
                                     onPress={() => {
                                         if (isAttendanceMode === true) {//Reset when repress on action
@@ -204,22 +303,19 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                                 >
                                     <Text style={styles.actionItem}>Take attendance mode</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity>
-                                    <Text style={styles.actionItem}>Set up modules</Text>
-                                </TouchableOpacity>
                             </Animated.View>
                         </View>
-                        <View style={{ position: 'relative' }}>
+                        {/* <View style={{ position: 'relative' }}>
                             <TouchableOpacity>
                                 <Image style={styles.titleIcon} source={require('../../assets/icons/filterIcon.png')} />
                             </TouchableOpacity>
-                        </View>
+                        </View> */}
                     </View>
 
                 </View>
                 <View style={styles.dashboardCardsCtn}>
                     <View style={styles.dashboardRow}>
-                        <DashboardCard label='Attendance' detail={dashBoard.attendance} theme='info' key={'1'} />
+                        <DashboardCard label='Attendants' detail={dashBoard.attendance} theme='info' key={'1'} />
                         <DashboardCard label='Attended' detail={dashBoard.attended} theme='success' key={'2'} />
                     </View>
                     <View style={styles.dashboardRow}>
@@ -234,8 +330,8 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                     { gap: 30, marginBottom: 24 }
                 ]}>
                     <View style={styles.classInfo}>
-                        <Text style={styles.infoTxt}>Subject: {subjectCode}</Text>
                         <Text style={styles.infoTxt}>Room: {roomName}</Text>
+                        <Text style={styles.infoTxt}>Subject: {subjectCode}</Text>
                     </View>
                     <TextInput
                         mode="outlined"
@@ -308,7 +404,7 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                                                 studentCode={student.studentCode}
                                                 attendanceMode={isAttendanceMode}
                                                 handleUpdateStatus={handleUpdateStatus}
-                                                // absentPercentage={student.absentPercentage}
+                                                absentPercentage={student.absentPercentage ? student.absentPercentage : 0}
                                                 key={`student_${student.studentCode}`}
                                             />
                                         )
@@ -379,7 +475,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderWidth: 1,
         borderColor: COLORS.borderColor,
-        gap: 8,
+        gap: 10,
 
         position: 'absolute',
         top: 40,

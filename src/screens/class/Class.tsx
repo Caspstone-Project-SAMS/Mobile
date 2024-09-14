@@ -1,112 +1,307 @@
-import { View, StyleSheet, ScrollView, Image } from 'react-native'
+import { View, StyleSheet, ScrollView, Image, Dimensions, Keyboard, TouchableWithoutFeedback, TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { Text, TextInput } from 'react-native-paper'
-import { TouchableOpacity } from 'react-native-gesture-handler'
+import { Searchbar, Text, TextInput } from 'react-native-paper'
 
-import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import { GLOBAL_STYLES } from '../../assets/styles/styles'
-import DashboardCard from './cards/DashboardCard'
-import StudentActivityCard from './cards/StudentActivityCard'
-import { Slots } from '../../models/schedule/Slot'
-import ActivityCard from '../home/cards/ActivityCard'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../redux/Store'
 import useDispatch from '../../redux/UseDispatch'
-import { getTodaySchedule } from '../../redux/slice/Schedule'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import Ionicons from 'react-native-vector-icons/Ionicons'
+import { getAllSemester } from '../../redux/slice/Semester'
+import { ClassModel } from '../../models/Class'
+import { ClassService } from '../../hooks/Class'
+import { Semester } from '../../models/Semester'
 
 
+type ClassItemProps = {
+    classCode: string,
+    roomName: string,
+    subject: string
+}
+
+const ClassItem: React.FC<ClassItemProps> = ({ classCode, roomName, subject }) => {
+    return (<View style={[styles.classItem, GLOBAL_STYLES.card]}>
+        <View style={styles.itemLeft}>
+            <Image
+                source={require('../../assets/icons/upcoming_x3.png')}
+                style={{
+                    width: 27,
+                    height: 27
+                }}
+            />
+        </View>
+        <View style={styles.itemRight}>
+            <View style={{ width: '88%' }}>
+                <Text>Class: {classCode}</Text>
+                <Text>Room: {roomName}</Text>
+                <Text>Subject: {subject}</Text>
+            </View>
+            <Ionicons name='chevron-forward' size={20} />
+        </View>
+    </View>)
+}
+
+const { width, height } = Dimensions.get('window');
 const Class = ({ navigation }) => {
-    const [searchVal, setSearchVal] = useState<string>('')
-    const [selectedView, setSelectedView] = useState<'list' | 'pending' | 'absent'>('list')
-    const { todaySchedules } = useSelector((state: RootState) => state.schedule);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedSemester, setSelectedSemester] = useState<Semester>();
+    const [searchClass, setSearchClass] = useState('');
+    const [classList, setClassList] = useState<ClassModel[]>([]);
+
     const dispatch = useDispatch();
     const userDetail = useSelector((state: RootState) => state.auth.userDetail?.result)
-    const semesters = useSelector((state: RootState) => state.semester.data)
+    const semesters = useSelector((state: RootState) => state.semester.data);
+
+    const [isOpenActions, setIsOpenActions] = useState<boolean>(false);
+    const opacity = useSharedValue(0);
+    const translateY = useSharedValue(-50);
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            opacity: withTiming(opacity.value, {
+                duration: 260,
+            }),
+            transform: [{ translateY: withTiming(translateY.value, { duration: 260 }) }],
+        };
+    });
 
     useEffect(() => {
-        const currentSemester = semesters.filter(item => item.semesterStatus === 2)
-        if (todaySchedules.length === 0 && userDetail) {
-            dispatch(getTodaySchedule({ lecturerId: userDetail.id, semesterId: currentSemester[0].semesterID }))
+        if (semesters && semesters.length === 0) {
+            dispatch(getAllSemester());
         }
     }, [])
 
-    return (
-        <ScrollView style={styles.container}>
-            <View style={styles.classActivities}>
-                <View style={styles.activitiesHeader}>
-                    <Text style={GLOBAL_STYLES.titleLabel}>Today Activities | {todaySchedules.length}</Text>
-                    <TouchableOpacity>
-                        <Text style={{ color: FONT_COLORS.blueFontColor }}>View All</Text>
-                    </TouchableOpacity>
-                </View>
+    useEffect(() => {
+        if (isOpenActions) {
+            opacity.value = 1;
+            translateY.value = 0;
+        } else {
+            opacity.value = 0;
+            translateY.value = -50;
+        }
+    }, [isOpenActions]);
 
-                <View style={{ gap: 10 }}>
-                    {
-                        todaySchedules.map((item, i) => {
-                            const startTime = item.startTime.substring(0, 5);
-                            const endTime = item.endTime.substring(0, 5);
-                            return (
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        navigation.navigate('ClassDetail', { schedule: item })
-                                    }}
-                                    key={`schedule_${i}`}
-                                >
-                                    <ActivityCard
-                                        room={item.roomName}
-                                        status={item.status ?? 'Past'}
-                                        subjectCode={item.subjectCode}
-                                        startTime={startTime}
-                                        endTime={endTime}
-                                    />
-                                </TouchableOpacity>
-                            )
-                        })
-                    }
-                </View>
+    useEffect(() => {
+        if (userDetail && selectedSemester && semesters.length > 0) {
+            const promise = ClassService.getClassBySemester(userDetail.id, selectedSemester.semesterID)
+            promise.then(data => {
+                setClassList(data.result);
+            }).catch(err => {
+                console.log("Error occured when get data ", JSON.stringify(err));
+            })
+        }
+    }, [selectedSemester])
+
+    useEffect(() => {
+        console.log("List has changed ", classList);
+    }, [classList])
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.searchContainer}>
+                <Searchbar
+                    placeholder={selectedSemester ? selectedSemester.semesterCode : 'Search Semester'}
+                    onChangeText={setSearchQuery}
+                    value={searchQuery}
+                    style={styles.searchBar}
+                    onFocus={() => setIsOpenActions(true)}
+                // onBlur={() => setIsOpenActions(false)}
+                />
+                {
+                    isOpenActions &&
+                    <Animated.View style={[styles.actionsModal, animatedStyle]}>
+                        <ScrollView style={{ maxHeight: height * 0.7 }}>
+                            {
+                                (semesters && semesters.length > 0) && semesters.map(item => {
+                                    if (searchQuery.length === 0) {
+                                        return (
+                                            <TouchableOpacity
+                                                key={`item_${item.semesterID}`}
+                                                style={{ marginBottom: 2 }}
+                                                onPress={() => {
+                                                    setSelectedSemester(item);
+                                                    Keyboard.dismiss();
+                                                    setIsOpenActions(false);
+                                                }}
+                                            >
+                                                <Text style={{ width: 'auto', paddingVertical: 6 }}>
+                                                    {item.semesterCode}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )
+                                    } else if (item.semesterCode.toLowerCase().includes(searchQuery.toLowerCase())) {
+                                        return (
+                                            <TouchableOpacity
+                                                key={`item_${item.semesterID}`}
+                                                style={{ paddingVertical: 6 }}
+                                                onPress={() => {
+                                                    setSelectedSemester(item);
+                                                    Keyboard.dismiss();
+                                                    setIsOpenActions(false);
+                                                }}
+                                            >
+                                                <Text>
+                                                    {item.semesterCode}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )
+                                    }
+                                })
+                            }
+                        </ScrollView>
+                    </Animated.View>
+                }
             </View>
-        </ScrollView>
+
+            <TouchableWithoutFeedback
+                onPress={() => {
+                    Keyboard.dismiss();
+                    setIsOpenActions(false);
+                }}
+            >
+                <View style={{ flex: 1 }}>
+                    <ScrollView style={{ flex: 1 }}>
+                        <View style={styles.accessibilityBar}>
+                            <Text style={{ marginBottom: 15, fontSize: 18, fontFamily: 'Lexend-Regular' }}>Class:</Text>
+                            <TextInput
+                                mode="outlined"
+                                placeholder="Search.."
+                                style={[styles.searchBox, styles.shadow]}
+                                right={<TextInput.Icon
+                                    icon={searchClass.length > 0 ? ('close') : ('magnify')}
+                                    onPress={() => {
+                                        if (searchClass.length > 0) {
+                                            setSearchClass('')
+                                        }
+                                    }}
+                                />}
+                                value={searchClass}
+                                onChangeText={val => {
+                                    setSearchClass(val);
+                                }}
+                            />
+                        </View>
+                        <View style={{ gap: 16, marginTop: 14 }}>
+                            {
+                                classList.length > 0 ? classList.map((item, index) => {
+                                    if (searchClass.length > 0
+                                        && item.classCode.toLowerCase().includes(searchClass.toLowerCase())) {
+                                        return (
+                                            <TouchableOpacity key={`class_${index}`}
+                                                onPress={() => {
+                                                    console.log("this class selected ", item.classID);
+                                                    navigation.navigate('ClassInfo', { classData: item })
+                                                }}
+                                            >
+                                                <ClassItem
+                                                    classCode={item.classCode}
+                                                    roomName={item.room.roomName}
+                                                    subject={`${item.subject.subjectCode} - ${item.subject.subjectName}`}
+                                                />
+                                            </TouchableOpacity>
+                                        )
+                                    } else if (searchClass.length === 0) {
+                                        return (
+                                            <TouchableOpacity key={`class_${index}`}
+                                                onPress={() => {
+                                                    console.log("this class selected ", item.classID);
+                                                    navigation.navigate('ClassInfo', { classData: item })
+                                                }}
+                                            >
+                                                <ClassItem
+                                                    classCode={item.classCode}
+                                                    roomName={item.room.roomName}
+                                                    subject={`${item.subject.subjectCode} - ${item.subject.subjectName}`}
+                                                />
+                                            </TouchableOpacity>
+                                        )
+                                    }
+                                }
+                                ) : (
+                                    <View style={GLOBAL_STYLES.verticalBetweenCenter}>
+                                        <Image
+                                            style={{ width: 100, height: 100 }}
+                                            source={require('../../assets/imgs/nodata_black.png')} alt='No data image' />
+                                        <Text>No Class Found</Text>
+                                    </View>
+                                )
+                            }
+                        </View>
+                    </ScrollView>
+                </View>
+            </TouchableWithoutFeedback>
+        </View>
     )
 }
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
         paddingHorizontal: 20,
         paddingVertical: 15,
-        backgroundColor: '#FFF'
+        backgroundColor: '#FFF',
     },
-    header: {},
-    headerTitle: {
-        justifyContent: 'space-between',
+    searchContainer: {
+        position: 'relative',
+        height: 'auto'
     },
-    titleIcon: {
-        width: 25,
-        height: 25,
-    },
-    dashboardCardsCtn: {
-        marginTop: 25,
-    },
-    dashboardRow: {
-        flex: 2,
-        gap: 12,
+    accessibilityBar: {
         flexDirection: 'row',
-        marginBottom: 12
+        alignItems: 'flex-end',
+        justifyContent: 'space-between'
     },
+    searchBar: {
+        marginBottom: 20,
+        backgroundColor: '#FFF',
+        zIndex: 2
+    },
+    actionsModal: {
+        minWidth: width - 40,
+        // paddingVertical: 8,
+        paddingTop: 18,
+        paddingBottom: 10,
+        paddingHorizontal: 12,
+        borderRadius: 5,
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderTopWidth: 0,
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+        // borderColor: COLORS.borderColor,
+        borderColor: '#FFF',
+        gap: 8,
 
-    body: {
-        marginTop: 12,
-        marginBottom: 40
+        position: 'absolute',
+        top: 40,
+        // right: 20,
+        zIndex: 1,
+
+        shadowColor: '#7F5DF0',
+        shadowOffset: {
+            width: 0,
+            height: 10
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.5,
+        elevation: 5
     },
-    classInfo: {
+    classItem: {
+        gap: 10,
+        padding: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
     },
-    infoTxt: {
-        flex: 1,
-        fontFamily: 'Lexend-Regular',
-        fontSize: 16
+    itemLeft: {
+
+    },
+    itemRight: {
+        flexDirection: 'row',
+        alignItems: 'center'
     },
     searchBox: {
-        flex: 1,
-        height: 55
+        width: width * 0.4,
+        height: 40,
+        backgroundColor: '#FFF'
     },
     shadow: {
         shadowColor: '#000',
@@ -115,38 +310,6 @@ const styles = StyleSheet.create({
         shadowRadius: 3.84,
         elevation: 5,
     },
-    filterListCtn: {
-        flex: 1,
-        marginBottom: 20,
-        borderRadius: 10,
-        flexDirection: 'row',
-        backgroundColor: '#F4F4F4',
-    },
-    filterBtn: {
-        flex: 1,
-    },
-    filterBtnTxt: {
-        textAlign: 'center',
-        paddingVertical: 16,
-        fontSize: 15,
-        borderRadius: 10
-    },
-    onSelectedBtn: {
-        backgroundColor: COLORS.skyBlue,
-        color: '#FFF'
-    },
-    studentList: {},
-
-    //Today activities
-    classActivities: {
-        marginTop: 5,
-        marginBottom: 25
-    },
-    activitiesHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-    }
 })
 
 export default Class

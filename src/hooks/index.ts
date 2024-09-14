@@ -1,7 +1,11 @@
-const server = 'http://34.81.224.196/api';
+const server = 'https://sams-project.com/api';
+//const server = 'http://34.81.223.233/api';
 
 //Auth
 export const USER_AUTH_API = `${server}/Auth`;
+
+//User
+export const USER_API = `${server}/User`;
 
 //Attendance
 export const ATTENDANCE_API = `${server}/Attendance`;
@@ -13,8 +17,15 @@ export const SEMESTER_API = `${server}/Semester`;
 //Student
 export const STUDENT_API = `${server}/Student`;
 
+//Class
+export const CLASS_API = `${server}/Class`;
+
 //Module
-export const MODULE_API = 'http://192.168.4.1/connect-to';
+export const MODULE_API = `${server}/Module`;
+export const WIFI_MODULE_API = 'http://192.168.4.1/connect-to';
+
+//Notification
+export const NOTIFICATION_API = `${server}/Notification`;
 
 //Google
 export const GET_GG_USER_INFO =

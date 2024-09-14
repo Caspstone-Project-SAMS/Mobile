@@ -1,39 +1,111 @@
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Title from '../../components/Title'
-import { Text, TextInput } from 'react-native-paper'
+import { Checkbox, Text, TextInput } from 'react-native-paper'
 import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
 import CustomBtn from '../../components/global/CustomBtn'
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import moment from 'moment'
+import { GLOBAL_STYLES } from '../../assets/styles/styles'
+import { Navigation } from '../../hooks/navigation/Navigation'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../redux/Store'
+import AuthService from '../../hooks/Auth'
+import { Toast } from 'react-native-toast-notifications'
 
-type UserProfile = {
+export interface UserProfile {
     firstName: string,
     lastName: string,
-    fullName: string,
+    displayName: string,
     email: string,
     address: string,
-    yob: string,
+    DOB: string,
     gender: number,
     phoneNumber: string
 }
 
-const AccountProfile = ({ navigation }) => {
+const AccountProfile: React.FC<Navigation> = ({ route, navigation }) => {
+    const { updateAble } = route.params;
+    const userInfo = useSelector((state: RootState) => state.auth.userDetail?.result)
+
     const [focusInput, setFocusInput] = useState<string>('');
-    const [text, setText] = useState("");
     const [userProfile, setUserProfile] = useState<UserProfile>({
         address: '',
         email: '',
         firstName: '',
-        fullName: '',
-        gender: 1,
+        displayName: '',
+        gender: 0, //0 - nam, 1 - nu
         lastName: '',
         phoneNumber: '',
-        yob: ''
+        DOB: '00/00/0000'
     })
+    const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+    const [isUpdate, setIsUpdate] = useState(updateAble ? updateAble : false)
+
+    const showDatePicker = () => {
+        setDatePickerVisibility(true);
+    };
+
+    const hideDatePicker = () => {
+        setDatePickerVisibility(false);
+    };
+
+    const handleConfirm = (date) => {
+        console.log("A date has been picked: ", moment(date).format('DD/MM/YYYY'));
+        const fmtTime = moment(date).format('YYYY-MM-DD')
+        setUserProfile(prev => ({ ...prev, DOB: fmtTime }))
+        hideDatePicker();
+    };
+
+    const handleGetInfo = () => {
+        if (userInfo) {
+            const promise = AuthService.getUserDetailByID(userInfo.id)
+            promise.then(data => {
+                // console.log("This is userdetail ", data);
+                const result = data.result;
+                if (result) {
+                    setUserProfile(prev => ({
+                        ...prev,
+                        address: result.address,
+                        email: result.email,
+                        firstName: result.firstName,
+                        displayName: result.displayName,
+                        gender: result.gender,
+                        lastName: result.lastName,
+                        phoneNumber: result.phoneNumber,
+                        DOB: result.dob,
+                    }))
+                }
+            }).catch(err => {
+                console.log("err when getting info ", err.response.data);
+            })
+        }
+    }
+
+    const handleUpdateProfile = () => {
+        if (userInfo && userInfo.id) {
+            const promise = AuthService.updateProfileByID(userInfo.id, userProfile)
+            promise.then(data => {
+                Toast.show('Update Info Successfully!', { type: 'success', placement: 'top' });
+                handleGetInfo();
+                // console.log("Daaaaa ", data);
+            }).catch(err => {
+                console.log("Err when update profile, ", err.response.data);
+            }).finally(() => {
+                setIsUpdate(false)
+            })
+            console.log("This is data gonna sent ", userProfile);
+        }
+    }
+
+    useEffect(() => {
+        handleGetInfo()
+    }, [])
 
     return (
         <ScrollView style={styles.container}>
             <Title title='Profile' navigation={navigation} />
-            <View>
+            <View style={{ paddingBottom: 24 }}>
                 <Text style={styles.label}>First Name</Text>
                 <TextInput
                     mode="outlined"
@@ -52,7 +124,9 @@ const AccountProfile = ({ navigation }) => {
                             text: FONT_COLORS.greyFontColor,
                         },
                     }}
-                    onChangeText={val => setText(val)}
+                    disabled={!isUpdate}
+                    value={userProfile.firstName}
+                    onChangeText={val => setUserProfile(prev => ({ ...prev, firstName: val }))}
                 />
 
                 <Text style={styles.label}>Last Name</Text>
@@ -73,16 +147,18 @@ const AccountProfile = ({ navigation }) => {
                             text: FONT_COLORS.greyFontColor,
                         },
                     }}
-                    onChangeText={val => setText(val)}
+                    disabled={!isUpdate}
+                    value={userProfile.lastName}
+                    onChangeText={val => setUserProfile(prev => ({ ...prev, lastName: val }))}
                 />
 
                 <Text style={styles.label}>Full Name</Text>
                 <TextInput
                     mode="outlined"
-                    outlineStyle={focusInput === 'fullName'
+                    outlineStyle={focusInput === 'displayName'
                         ? styles.outlineInputFocus
                         : styles.defaultOutline}
-                    onFocus={() => setFocusInput('fullName')}
+                    onFocus={() => setFocusInput('displayName')}
                     onBlur={() => setFocusInput('')}
                     style={[styles.input, {
                         // marginTop: 10,
@@ -94,8 +170,60 @@ const AccountProfile = ({ navigation }) => {
                             text: FONT_COLORS.greyFontColor,
                         },
                     }}
-                    onChangeText={val => setText(val)}
+                    disabled={!isUpdate}
+                    value={userProfile.displayName}
+                    onChangeText={val => setUserProfile(prev => ({ ...prev, displayName: val }))}
                 />
+                <View style={[GLOBAL_STYLES.horizontalBetweenCenter, { marginBottom: 18 }]}>
+                    <View>
+                        <Text style={{ marginBottom: 5 }}>Birthday:</Text>
+                        <TouchableOpacity
+                            disabled={!isUpdate}
+                            onPress={() => {
+                                showDatePicker()
+                            }}
+                        >
+                            <View style={[GLOBAL_STYLES.card, { padding: 10, alignSelf: 'flex-start' }]}>
+                                <Text>{
+                                    userProfile.DOB === '00/00/0000'
+                                        ? '00/00/0000'
+                                        : moment(userProfile.DOB, 'YYYY-MM-DD', true).format('DD/MM/YYYY')
+                                }</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <DateTimePickerModal
+                            disabled={!isUpdate}
+                            isVisible={isDatePickerVisible}
+                            onConfirm={handleConfirm}
+                            onCancel={hideDatePicker}
+                        />
+                    </View>
+                    <View>
+                        <Text>Gender: </Text>
+                        <View style={GLOBAL_STYLES.horizontalBetweenCenter}>
+                            <Checkbox
+                                status={userProfile.gender === 0 ? 'checked' : 'unchecked'}
+                                onPress={() => {
+                                    setUserProfile(prev => ({ ...prev, gender: 0 }));
+                                }}
+                                color="#2563EB"
+                                disabled={!isUpdate}
+                            />
+                            <Text>Male</Text>
+
+                            <Checkbox
+                                status={userProfile.gender === 1 ? 'checked' : 'unchecked'}
+                                onPress={() => {
+                                    setUserProfile(prev => ({ ...prev, gender: 1 }));
+                                }}
+                                color="#2563EB"
+                                disabled={!isUpdate}
+                            />
+                            <Text>Female</Text>
+                        </View>
+                    </View>
+                </View>
 
                 <Text style={styles.label}>Address</Text>
                 <TextInput
@@ -115,7 +243,9 @@ const AccountProfile = ({ navigation }) => {
                             text: FONT_COLORS.greyFontColor,
                         },
                     }}
-                    onChangeText={val => setText(val)}
+                    disabled={!isUpdate}
+                    value={userProfile.address}
+                    onChangeText={val => setUserProfile(prev => ({ ...prev, address: val }))}
                 />
 
                 <Text style={styles.label}>Phone Number</Text>
@@ -136,11 +266,50 @@ const AccountProfile = ({ navigation }) => {
                             text: FONT_COLORS.greyFontColor,
                         },
                     }}
-                    onChangeText={val => setText(val)}
+                    disabled={!isUpdate}
+                    value={userProfile.phoneNumber}
+                    onChangeText={val => setUserProfile(prev => ({ ...prev, phoneNumber: val }))}
                 />
-                <TouchableOpacity>
-                    <CustomBtn text='Update Profile' />
-                </TouchableOpacity>
+
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                    mode="outlined"
+                    outlineStyle={focusInput === 'email'
+                        ? styles.outlineInputFocus
+                        : styles.defaultOutline}
+                    onFocus={() => setFocusInput('email')}
+                    onBlur={() => setFocusInput('')}
+                    style={[styles.input, {
+                        // marginTop: 10,
+                        backgroundColor: "#FFF"
+                    }]}
+                    theme={{
+                        colors: {
+                            primary: COLORS.skyBlue,
+                            text: FONT_COLORS.greyFontColor,
+                        },
+                    }}
+                    disabled={true}
+                    value={userProfile.email}
+                    onChangeText={val => setUserProfile(prev => ({ ...prev, email: val }))}
+                />
+                {
+                    isUpdate ? (
+                        <TouchableOpacity
+                            style={{ marginVertical: 24 }}
+                            onPress={() => handleUpdateProfile()}
+                        >
+                            <CustomBtn text='Update Profile' />
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity
+                            style={{ marginVertical: 24 }}
+                            onPress={() => setIsUpdate(true)}
+                        >
+                            <CustomBtn text='Edit Profile' />
+                        </TouchableOpacity>
+                    )
+                }
             </View>
         </ScrollView>
     )

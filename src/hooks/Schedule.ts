@@ -23,6 +23,9 @@ const getScheduleByDay = async (
       semesterId,
       startDate,
       endDate,
+      startPage: 1,
+      endPage: 10,
+      quantity: 50,
     },
   });
   return response.data;
