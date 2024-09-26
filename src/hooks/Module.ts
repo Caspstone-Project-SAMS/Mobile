@@ -1,6 +1,7 @@
 import axios from 'axios';
-import { MODULE_API, WIFI_MODULE_API } from '.';
+import { MODULE_ACTIVITY_API, MODULE_API, WIFI_MODULE_API } from '.';
 import { ModuleConfig } from '../models/Module/Module';
+import { ModuleActivityBySchedule } from '../models/Module/ModuleActivity';
 
 interface ConfigExtend extends ModuleConfig {
   autoPrepare: boolean;
@@ -95,6 +96,86 @@ const prepareDataModule = async (
   return response.data;
 };
 
+const getModuleActivityByScheduleID = async (
+  scheduleID: number,
+): Promise<ModuleActivityBySchedule> => {
+  const response = await axios.get(
+    `${MODULE_ACTIVITY_API}?scheduleId=${scheduleID}`,
+  );
+  return response.data as ModuleActivityBySchedule;
+};
+
+const startCheckAttendance = async (
+  ModuleID: number,
+  Mode: number,
+  StartAttendance: { ScheduleID: number },
+  token: string,
+) => {
+  const response = await axios.post(
+    `${MODULE_API}/Activate`,
+    {
+      ModuleID,
+      Mode,
+      StartAttendance,
+    },
+    {
+      headers: {
+        Accept: '*/*',
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json-patch+json',
+      },
+    },
+  );
+  return response.data;
+};
+
+const stopCheckAttendance = async (
+  ModuleID: number,
+  Mode: number,
+  StopAttendance: { ScheduleID: number },
+  token: string,
+) => {
+  const response = await axios.post(
+    MODULE_API + '/Activate',
+    {
+      ModuleID,
+      Mode,
+      StopAttendance,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json-patch+json',
+        Authorization: `Bearer ` + token,
+      },
+    },
+  );
+  return response.data;
+};
+
+const syncAttendanceData = async (
+  ModuleID: number,
+  Mode: number,
+  SyncingAttendanceData: { ScheduleID: number },
+  token: string,
+) => {
+  const response = await axios.post(
+    `${MODULE_API}/Activate`,
+    {
+      ModuleID,
+      Mode,
+      SyncingAttendanceData,
+    },
+    {
+      headers: {
+        Accept: '*/*',
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json-patch+json',
+      },
+    },
+  );
+  return response.data;
+};
+
 export const ModuleService = {
   setUpWifi,
   getModuleByEmployeeID,
@@ -102,4 +183,8 @@ export const ModuleService = {
   connectModule,
   cancelSessionModule,
   prepareDataModule,
+  getModuleActivityByScheduleID,
+  syncAttendanceData,
+  startCheckAttendance,
+  stopCheckAttendance,
 };

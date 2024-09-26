@@ -22,6 +22,7 @@ export const CLASS_API = `${server}/Class`;
 
 //Module
 export const MODULE_API = `${server}/Module`;
+export const MODULE_ACTIVITY_API = `${server}/ModuleActivity`;
 export const WIFI_MODULE_API = 'http://192.168.4.1/connect-to';
 
 //Notification

@@ -166,7 +166,7 @@ const Home = () => {
         }
       }
       // console.log("cateried ", todaySchedules);
-      // console.log("dashboardInfo ", dashboardInfoVal);
+      console.log("dashboardInfo ", dashboardInfoVal);
     } catch (error) {
       console.log('error when calculating dashboard');
     }
@@ -423,7 +423,7 @@ const Home = () => {
             <SmallCard
               titleIcon={require('../../assets/icons/upcoming_x3.png')}
               titleTxt={`Upcoming Class`}
-              detail={dashBoardInfo?.upcomingTxt ? (dashBoardInfo.curUpClass.classCode) : ('Done')}
+              detail={dashBoardInfo?.curUpClass.classCode ? (dashBoardInfo.curUpClass.classCode) : ('Done')}
               subDetail='View Detail'
               key={'dashboardCard1'}
               isUpcoming={true}

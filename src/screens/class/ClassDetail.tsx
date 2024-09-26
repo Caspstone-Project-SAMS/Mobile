@@ -1,6 +1,6 @@
 import { View, StyleSheet, ScrollView, Image, Dimensions } from 'react-native'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Modal, Text, TextInput } from 'react-native-paper'
+import { Modal, Portal, Text, TextInput } from 'react-native-paper'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 
 import { COLORS, FONT_COLORS } from '../../assets/styles/variables'
@@ -19,8 +19,12 @@ import { ClassService } from '../../hooks/Class'
 import PrepareModule from '../../components/module/PrepareModule'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../redux/Store'
+import { ModuleService } from '../../hooks/Module'
+import { ModuleActivity } from '../../models/Module/ModuleActivity'
+import moment from 'moment'
+import axios from 'axios'
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 type DashBoard = {
     attendance: number,
@@ -35,6 +39,178 @@ interface AttendanceExtend extends Attendance {
 
 let socket;
 
+const InteractModule: React.FC<{ visible: boolean, hideModal: any, scheduleID: number }> = ({ visible, hideModal, scheduleID }) => {
+    const userToken = useSelector((state: RootState) => state.auth.userDetail?.token)
+    const containerStyle = { backgroundColor: 'white', padding: 20, height: height - 100 };
+    const [moduleActivity, setModuleActivity] = useState<ModuleActivity[]>([])
+    const [selectedActivity, setSelectedActivity] = useState<ModuleActivity | undefined>(undefined)
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleStart = () => {
+        const moduleID = selectedActivity?.module.moduleID
+        try {
+            if (selectedActivity && userToken && moduleID) {
+                const promise = ModuleService.startCheckAttendance(
+                    moduleID,
+                    10,
+                    { ScheduleID: scheduleID },
+                    userToken
+                )
+                promise.then(data => {
+                    Toast.show('Start session successfully!', { type: 'success', placement: 'top' })
+                }).catch(err => {
+                    Toast.show('Start session failed!', { type: 'danger', placement: 'top' })
+                })
+            }
+            else if (moduleActivity.length === 0) {
+                Toast.show('No module activity found for this schedule', { placement: 'top', type: 'info' });
+            }
+            else if (selectedActivity === undefined) {
+                Toast.show('Select a module before continue!', { placement: 'top', type: 'warning' });
+            }
+
+        } catch (error) {
+            console.log("Error when start", error);
+        }
+    }
+
+    const handleStop = () => {
+        const moduleID = selectedActivity?.module.moduleID;
+        try {
+            if (selectedActivity && userToken && moduleID) {
+                const promise = ModuleService.stopCheckAttendance(moduleID, 4, { ScheduleID: scheduleID }, userToken);
+                promise.then(data => {
+                    Toast.show('Stop session successfully!', { type: 'success', placement: 'top' })
+                }).catch(err => {
+                    Toast.show('Stop session failed!', { type: 'danger', placement: 'top' })
+                })
+            }
+            else if (moduleActivity.length === 0) {
+                Toast.show('No module activity found for this schedule', { placement: 'top', type: 'info' });
+            }
+            else if (selectedActivity === undefined) {
+                Toast.show('Select a module before continue!', { placement: 'top', type: 'warning' });
+            }
+        } catch (error) {
+            console.log("Error when stop", error);
+        }
+    }
+
+    const handleSyncData = () => {
+        try {
+            const moduleID = selectedActivity?.module.moduleID
+            if (selectedActivity && userToken && moduleID) {
+                const promise = ModuleService.syncAttendanceData(moduleID, 12, { ScheduleID: scheduleID }, userToken);
+                promise.then(data => {
+                    Toast.show('Sync data successfully', { placement: 'top', type: 'success' })
+                }).catch(err => {
+                    Toast.show('Failed to sync attendance data, please try again later', { placement: 'top', type: 'danger' })
+                })
+            }
+            else if (moduleActivity.length === 0) {
+                Toast.show('No module activity found for this schedule', { placement: 'top', type: 'info' });
+            }
+            else if (selectedActivity === undefined) {
+                Toast.show('Select a module before continue!', { placement: 'top', type: 'warning' });
+            }
+        } catch (error) {
+            console.log("err herrrrrrrrrrrrrrrrrrrr ,", error);
+        }
+    }
+
+    useEffect(() => {
+        const promise = ModuleService.getModuleActivityByScheduleID(scheduleID);
+        promise.then(data => {
+            if (data && data.result) {
+                const reverseList = data.result.reverse();
+                console.log("This is module activity ", moduleActivity);
+                setModuleActivity(reverseList);
+            } else {
+                setModuleActivity([]);
+            }
+        }).catch(err => {
+            console.log("Error when get module by schedule id");
+        })
+
+    }, [visible])
+
+    return (
+        <>
+            <Portal>
+                <Modal visible={visible} onDismiss={hideModal}>
+                    <View style={containerStyle}>
+                        <Text style={{ fontFamily: 'Lexend-Regular', fontSize: 16 }}>Module prepared:</Text>
+                        <View style={{ gap: 7, marginTop: 10, marginBottom: 15 }}>
+                            {
+                                moduleActivity.length > 0 ? moduleActivity.map((item, index) => {
+                                    const isSelected = selectedActivity?.moduleActivityId === item.moduleActivityId
+                                    return (
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                setSelectedActivity(item);
+                                            }}
+                                            key={`activity_${index}`}
+                                            style={[GLOBAL_STYLES.card, isSelected && { borderWidth: 2, borderColor: 'green' }, { padding: 10 }]}
+                                        >
+                                            <Text style={{ fontFamily: 'Lexend-Regular' }}>Module: {item.module.moduleID}</Text>
+                                            <View style={[GLOBAL_STYLES.horizontalCenter, { gap: 15, marginTop: 4 }]}>
+                                                <Image
+                                                    style={{ width: 60, height: 60 }}
+                                                    source={require('../../assets/imgs/module_rm_bg.png')}
+                                                />
+
+                                                <View>
+                                                    <Text>Time prepared: {'\n'}{
+                                                        moment(item.startTime).format('DD/MM/YYYY, h:mm:ss a')
+                                                    }</Text>
+                                                    <Text>
+                                                        Uploaded: {
+                                                            item.preparationTask
+                                                                ? `${item.preparationTask.uploadedFingers}/${item.preparationTask.totalFingers} fingers`
+                                                                : ('0/0 finger')
+                                                        }
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                    )
+                                }) : (
+                                    <View style={GLOBAL_STYLES.verticalBetweenCenter}>
+                                        <Image
+                                            style={{ width: 100, height: 100 }}
+                                            source={require('../../assets/imgs/nodata_black.png')} alt='No data image' />
+                                        <Text>No Activity Found</Text>
+                                    </View>
+                                )
+                            }
+                        </View>
+                        <View>
+                            <Text style={{ fontFamily: 'Lexend-Regular', fontSize: 16 }}>Actions: </Text>
+                            <View style={{ gap: 20, marginTop: 10 }}>
+                                <TouchableOpacity
+                                    onPress={() => handleStart()}
+                                >
+                                    <CustomBtn text='Start session' />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={() => handleStop()}
+                                >
+                                    <CustomBtn text='Stop session' />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={() => handleSyncData()}
+                                >
+                                    <CustomBtn text='Sync Data' />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+            </Portal>
+        </>
+    )
+}
+
 const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
     const { schedule: { classCode, classID, date, endTime, roomName, scheduleID, slotNumber, startTime, status, subjectCode } } = route.params
 
@@ -47,6 +223,10 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
     const [isOpenActions, setIsOpenActions] = useState<boolean>(false);
     const [isAttendanceMode, setIsAttendanceMode] = useState<boolean>(false);
     const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
+    const [visible, setVisible] = React.useState(false);
+
+    const showModal = () => setVisible(true);
+    const hideModal = () => setVisible(false);
 
     const userToken = useSelector((state: RootState) => state.auth.userDetail?.token)
 
@@ -295,6 +475,15 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
 
                                 <TouchableOpacity
                                     onPress={() => {
+                                        setIsOpenActions(false)
+                                        showModal()
+                                    }}
+                                >
+                                    <Text style={styles.actionItem}>Interacts with module</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    onPress={() => {
                                         if (isAttendanceMode === true) {//Reset when repress on action
                                             setFilteredList(studentList);
                                         }
@@ -451,9 +640,10 @@ const ClassDetail: React.FC<Navigation> = ({ route, navigation }) => {
                                 </View>
                             )
                         }
-
                     </View>
+
                 </View>
+                <InteractModule visible={visible} hideModal={hideModal} scheduleID={scheduleID} />
             </View>
         </ScrollView>
     )
